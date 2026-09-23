@@ -21,8 +21,10 @@ const HEX_DIRS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
 const HOLE_BY_DIST = [1, 0.40, 0.17, 0.06];
 const GRID_BY_DIST = [0, 0.46, 0.24, 0.09];
 
-// Hvor ofte en rute får ikon i stedet for regnestykke.
-const IKON_ANDEL = 0.15;
+// Halve brettet har ikon i stedet for regnestykke. Antallet trekkes på
+// forhånd og fordeles tilfeldig, slik at hvert brett får nøyaktig samme
+// blanding uansett flaks.
+const IKON_ANDEL = 0.5;
 
 // Enkle ikoner tegnet i et 24x24-rutenett, alle uten egen fill slik at
 // de arver farge fra CSS. Holdes bevisst enkle - de skal leses på en
@@ -152,6 +154,7 @@ class HexBoard {
     const merkeGroup = hexEl('g', { class: 'merke-lag' });
     const hexGroup = hexEl('g');
     const start = startKey || hexKey(0, 0);
+    const ikonNokler = this._trekkIkonruter(pixels, start);
 
     pixels.forEach(p => {
       const k = hexKey(p.q, p.r);
@@ -209,9 +212,7 @@ class HexBoard {
       });
       haloGroup.appendChild(halo);
 
-      // Noen ruter har ikon i stedet for regnestykke. Startruta holdes
-      // utenfor - den skal alltid stille det første spørsmålet.
-      const erIkon = !isStart && Math.random() < IKON_ANDEL;
+      const erIkon = ikonNokler.has(k);
       let ikonEl = null;
       const merke = hexEl('text', {
         class: 'hex-merketekst',
@@ -270,6 +271,23 @@ class HexBoard {
     this.revealedCount = 0;
     this._updateReachable();
     this._emitProgress();
+  }
+
+  // Startruta holdes utenfor - den skal alltid stille det første spørsmålet.
+  _trekkIkonruter(pixels, start){
+    const kandidater = pixels
+      .map(p => hexKey(p.q, p.r))
+      .filter(k => k !== start);
+
+    for (let i = kandidater.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      const mellom = kandidater[i];
+      kandidater[i] = kandidater[j];
+      kandidater[j] = mellom;
+    }
+
+    const antall = Math.floor(pixels.length * IKON_ANDEL);
+    return new Set(kandidater.slice(0, antall));
   }
 
   _buildDefs(defs, minX, minY, w, h){

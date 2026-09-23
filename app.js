@@ -6,10 +6,11 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 13;
+const VERSJON = 14;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 const NIVA_LAGER = 'hex-niva';
+const BRETT_LAGER = 'hex-brett-lost';
 
 const svg = document.getElementById('board');
 const board = new HexBoard(svg, { hexSize: 46, gapInset: 0.90 });
@@ -30,11 +31,18 @@ const oppgaveSvar = document.getElementById('oppgaveSvar');
 const oppgaveMelding = document.getElementById('oppgaveMelding');
 const oppgaveAvbryt = document.getElementById('oppgaveAvbryt');
 const tastatur = document.getElementById('tastatur');
+const brettTeller = document.getElementById('brettTeller');
+const winStatus = document.getElementById('winStatus');
+const winNiva = document.getElementById('winNiva');
 
-let niva = '6-7';
+let niva = '6-8';
 let aktivOppgave = null;   // { rute, fasit, tekst }
 let innTastet = '';
 let forrigeTekst = '';
+
+// Antall fullførte brett styrer hvor vanskelig oppgavene blir, innenfor
+// det alderstrinnet som er valgt.
+let brettLost = 0;
 
 // Hver åpne rute har sitt eget stykke, slik at barnet kan se dem alle og
 // velge hvilken det vil regne ut. Stykket står fast til ruta er løst.
@@ -44,23 +52,62 @@ const ruteOppgaver = new Map();
 
 function lesLagretNiva(){
   try {
-    const lagret = localStorage.getItem(NIVA_LAGER);
+    const lagret = Matte.flyttNiva(localStorage.getItem(NIVA_LAGER));
     if (lagret && Matte.nivaer[lagret]) return lagret;
   } catch (e) {}
-  return '6-7';
+  return '6-8';
 }
 
 function lagreNiva(id){
   try { localStorage.setItem(NIVA_LAGER, id); } catch (e) {}
 }
 
+function lesBrettLost(){
+  try {
+    const tall = parseInt(localStorage.getItem(BRETT_LAGER), 10);
+    if (Number.isFinite(tall) && tall >= 0) return tall;
+  } catch (e) {}
+  return 0;
+}
+
+function lagreBrettLost(){
+  try { localStorage.setItem(BRETT_LAGER, String(brettLost)); } catch (e) {}
+}
+
+function trinn(){
+  return Matte.trinnFor(brettLost);
+}
+
+function oppdaterBrettTeller(){
+  if (brettLost === 0){
+    brettTeller.textContent = '';
+    brettTeller.hidden = true;
+    return;
+  }
+  brettTeller.hidden = false;
+  brettTeller.textContent = brettLost + ' brett løst · nivå ' +
+    (trinn() + 1) + '/' + (Matte.MAKS_TRINN + 1);
+}
+
+// Beskrivelsene på alderstrinn-knappene endrer seg med vanskelighetstrinnet,
+// så en voksen kan se hva barnet faktisk får av oppgaver.
+function oppdaterNivaTekster(){
+  const beskrivelser = {};
+  Matte.nivaListe(trinn()).forEach(n => { beskrivelser[n.id] = n.beskrivelse; });
+  nivaVelger.querySelectorAll('.chip').forEach(knapp => {
+    const id = knapp.dataset.niva;
+    if (beskrivelser[id]) knapp.title = beskrivelser[id];
+  });
+}
+
 function byggNivaVelger(){
-  Matte.nivaListe().forEach(n => {
+  Matte.nivaListe(trinn()).forEach(n => {
     const knapp = document.createElement('button');
     knapp.className = 'chip' + (n.id === niva ? ' active' : '');
     knapp.type = 'button';
     knapp.textContent = n.navn;
     knapp.title = n.beskrivelse;
+    knapp.dataset.niva = n.id;
     knapp.addEventListener('click', () => {
       niva = n.id;
       lagreNiva(n.id);
@@ -75,7 +122,7 @@ function byggNivaVelger(){
 /* ---------- Stykker ute på brettet ---------- */
 
 function giRuteOppgave(ruteNokkel){
-  const oppgave = Matte.lagOppgave(niva, forrigeTekst);
+  const oppgave = Matte.lagOppgave(niva, forrigeTekst, trinn());
   forrigeTekst = oppgave.tekst;
   ruteOppgaver.set(ruteNokkel, oppgave);
   board.setLabel(ruteNokkel, oppgave.tekst);
@@ -207,6 +254,22 @@ board.onProgress = (avdekket, totalt) => {
 };
 
 board.onComplete = () => {
+  const trinnFor = trinn();
+  brettLost++;
+  lagreBrettLost();
+  const trinnEtter = trinn();
+
+  oppdaterBrettTeller();
+  oppdaterNivaTekster();
+
+  winStatus.textContent = brettLost === 1
+    ? 'Ditt første brett er ferdig!'
+    : 'Du har løst ' + brettLost + ' brett.';
+
+  winNiva.textContent = trinnEtter > trinnFor
+    ? 'Regnestykkene blir litt vanskeligere nå.'
+    : '';
+
   setTimeout(() => { winOverlay.hidden = false; }, 700);
 };
 
@@ -232,7 +295,9 @@ document.addEventListener('keydown', e => {
 });
 
 niva = lesLagretNiva();
+brettLost = lesBrettLost();
 byggNivaVelger();
+oppdaterBrettTeller();
 byggTastatur();
 document.getElementById('version').textContent = 'v' + VERSJON;
 nyttBrett();

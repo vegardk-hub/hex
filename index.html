@@ -25,7 +25,7 @@
     <div class="brand">
       <span class="brand-mark">⬡</span>
       <div>
-        <h1>HEX <span class="version" id="version">v13</span></h1>
+        <h1>HEX <span class="version" id="version">v14</span></h1>
         <span class="sub">Løs regnestykket, og ruta lyser opp gjennom tåken</span>
       </div>
     </div>
@@ -43,6 +43,7 @@
   <div class="progress-row">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <span class="progress-label" id="progressLabel">0 / 37 ruter avdekket</span>
+    <span class="brett-teller" id="brettTeller" hidden></span>
   </div>
 
   <div class="board-wrap">
@@ -64,7 +65,8 @@
 <div class="win-overlay" id="winOverlay" hidden>
   <div class="win-card">
     <h2>Tåken er borte!</h2>
-    <p>Alle rutene på brettet er avdekket.</p>
+    <p id="winStatus">Alle rutene på brettet er avdekket.</p>
+    <p class="win-niva" id="winNiva"></p>
     <button id="winNewBoard" class="btn-primary">Spill igjen</button>
   </div>
 </div>

@@ -149,7 +149,18 @@ select#sizeSelect{
 .btn-primary:hover{ box-shadow: 0 0 14px rgba(79,240,228,.4); }
 select#sizeSelect:hover{ border-color: var(--cyan); }
 
-.progress-row{ display: flex; align-items: center; gap: 12px; padding-inline: 4px; }
+.progress-row{ display: flex; align-items: center; gap: 12px; padding-inline: 4px; flex-wrap: wrap; }
+
+.brett-teller{
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: #04211d;
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .progress-track{
   flex: 1; height: 6px; border-radius: 999px;
   background: rgba(255,255,255,.06);
@@ -565,7 +576,9 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   background-clip: text;
   color: transparent;
 }
-.win-card p{ color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+.win-card p{ color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+.win-card .win-niva{ color: var(--green); font-weight: 700; }
+.win-card p:last-of-type{ margin-bottom: 18px; }
 
 [hidden]{ display: none !important; }
 
