@@ -140,7 +140,7 @@ class HexBoard {
       g.dataset.q = p.q; g.dataset.r = p.r;
 
       const hit = hexEl('polygon', { class: 'hex-hit', points: this.pointsAttr(outer) });
-      const outline = hexEl('polygon', { class: 'hex-outline', points: this.pointsAttr(inner) });
+      const outline = hexEl('polygon', { class: 'hex-outline', points: this.pointsAttr(inner), pathLength: '100' });
       g.appendChild(hit);
 
       if (!isStart){
