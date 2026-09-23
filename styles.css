@@ -279,6 +279,37 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
 }
 .hex-sheen.lit{ opacity: 1; }
 
+/* Regnestykket og ikonene som står i rutene. Ligger over tåken, men tar
+   ikke imot klikk - selve ruta under skal fange trykket. */
+.merke-lag{ pointer-events: none; }
+
+.hex-merketekst{
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  fill: #a6ffc4;
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: -.02em;
+  opacity: 0;
+  transition: opacity .55s ease;
+  filter: drop-shadow(0 0 5px rgba(82,224,142,.95)) drop-shadow(0 0 13px rgba(82,224,142,.5));
+}
+.hex-merketekst.synlig{ opacity: 1; }
+
+.hex-ikon{
+  fill: #a6ffc4;
+  opacity: 0;
+  transition: opacity .55s ease, fill .6s ease;
+  filter: drop-shadow(0 0 6px rgba(82,224,142,.9));
+}
+.hex-ikon.synlig{ opacity: 1; }
+/* Når ikonruta er løst blir ikonet en mørk silhuett på den lyse flata. */
+.hex-ikon.lost{
+  fill: rgba(3,22,12,.7);
+  opacity: .9;
+  filter: none;
+}
+
 /* Ringbølgen som slår utover når en rute løses. */
 .hex-ripple{
   fill: none;

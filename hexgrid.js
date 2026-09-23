@@ -21,6 +21,34 @@ const HEX_DIRS = [[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
 const HOLE_BY_DIST = [1, 0.40, 0.17, 0.06];
 const GRID_BY_DIST = [0, 0.46, 0.24, 0.09];
 
+// Hvor ofte en rute får ikon i stedet for regnestykke.
+const IKON_ANDEL = 0.15;
+
+// Enkle ikoner tegnet i et 24x24-rutenett, alle uten egen fill slik at
+// de arver farge fra CSS. Holdes bevisst enkle - de skal leses på en
+// liten flate.
+const HEX_IKONER = [
+  { navn: 'stjerne', deler: [{ tag: 'path', d: 'M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z' }] },
+  { navn: 'hjerte', deler: [{ tag: 'path', d: 'M12 21S3.2 15.6 3.2 9.8C3.2 6.6 5.6 4.3 8.5 4.3c1.6 0 3 .8 3.5 1.9.5-1.1 1.9-1.9 3.5-1.9 2.9 0 5.3 2.3 5.3 5.5C20.8 15.6 12 21 12 21z' }] },
+  { navn: 'lyn', deler: [{ tag: 'path', d: 'M13.2 2L4.4 13.9h5.9L9.6 22l9-12.2h-6.2z' }] },
+  { navn: 'måne', deler: [{ tag: 'path', d: 'M20.4 14.9A8.6 8.6 0 0 1 9.4 3.8a9.2 9.2 0 1 0 11 11.1z' }] },
+  { navn: 'dråpe', deler: [{ tag: 'path', d: 'M12 2.8c0 0 6.4 7.1 6.4 10.9A6.4 6.4 0 0 1 5.6 13.7C5.6 9.9 12 2.8 12 2.8z' }] },
+  { navn: 'diamant', deler: [{ tag: 'path', d: 'M12 2.2l7.6 7L12 21.8 4.4 9.2z' }] },
+  { navn: 'blomst', deler: [
+    { tag: 'circle', cx: 12, cy: 5.6, r: 3.5 },
+    { tag: 'circle', cx: 18.1, cy: 9.8, r: 3.5 },
+    { tag: 'circle', cx: 15.8, cy: 17, r: 3.5 },
+    { tag: 'circle', cx: 8.2, cy: 17, r: 3.5 },
+    { tag: 'circle', cx: 5.9, cy: 9.8, r: 3.5 },
+    { tag: 'circle', cx: 12, cy: 11.8, r: 3.1 }
+  ] },
+  { navn: 'blad', deler: [{ tag: 'path', d: 'M20.5 3.4C11.8 3.4 5.2 7.6 5.2 14.3c0 2 .7 3.8 1.8 5.1L4 22.2l1.6 1.4 2.9-2.7c1.3.9 2.9 1.4 4.6 1.4 6.7 0 7.4-12.8 7.4-18.9z' }] },
+  { navn: 'sol', deler: [
+    { tag: 'circle', cx: 12, cy: 12, r: 5 },
+    { tag: 'path', d: 'M11 1h2v3.6h-2zM11 19.4h2V23h-2zM1 11h3.6v2H1zM19.4 11H23v2h-3.6zM4 5.4l1.4-1.4 2.5 2.5L6.5 8zM16.1 17.5l1.4-1.4 2.5 2.5-1.4 1.4zM5.4 20l-1.4-1.4 2.5-2.5L8 17.5zM17.5 7.9L16.1 6.5l2.5-2.5L20 5.4z' }
+  ] }
+];
+
 function hexEl(tag, attrs){
   const e = document.createElementNS(HEX_NS, tag);
   if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
@@ -56,6 +84,7 @@ class HexBoard {
     this.onProgress = null;       // (revealedCount, total)
     this.onComplete = null;       // ()
     this.onRequestReveal = null;  // (key) - sett denne for å be om godkjenning (f.eks. et regnestykke) før reveal(key)
+    this.onReachable = null;      // (nøkler[]) - rutene som nå er åpne, så spillet kan gi dem hvert sitt stykke
   }
 
   axialToPixel(q, r){
@@ -120,6 +149,7 @@ class HexBoard {
     const neonGroup = hexEl('g');
     const gridGroup = hexEl('g');
     const haloGroup = hexEl('g');
+    const merkeGroup = hexEl('g', { class: 'merke-lag' });
     const hexGroup = hexEl('g');
     const start = startKey || hexKey(0, 0);
 
@@ -179,6 +209,33 @@ class HexBoard {
       });
       haloGroup.appendChild(halo);
 
+      // Noen ruter har ikon i stedet for regnestykke. Startruta holdes
+      // utenfor - den skal alltid stille det første spørsmålet.
+      const erIkon = !isStart && Math.random() < IKON_ANDEL;
+      let ikonEl = null;
+      const merke = hexEl('text', {
+        class: 'hex-merketekst',
+        x: p.x.toFixed(2), y: p.y.toFixed(2),
+        'font-size': (this.size * 0.34).toFixed(1)
+      });
+      merkeGroup.appendChild(merke);
+
+      if (erIkon){
+        const ikon = HEX_IKONER[Math.floor(Math.random() * HEX_IKONER.length)];
+        const skala = this.size * 0.68 / 24;
+        ikonEl = hexEl('g', {
+          class: 'hex-ikon',
+          transform: 'translate(' + (p.x - 12 * skala).toFixed(2) + ',' +
+            (p.y - 12 * skala).toFixed(2) + ') scale(' + skala.toFixed(3) + ')'
+        });
+        ikon.deler.forEach(del => {
+          const attrs = Object.assign({}, del);
+          delete attrs.tag;
+          ikonEl.appendChild(hexEl(del.tag, attrs));
+        });
+        merkeGroup.appendChild(ikonEl);
+      }
+
       const g = hexEl('g', { class: 'hex locked' });
       g.dataset.q = p.q; g.dataset.r = p.r;
       g.style.setProperty('--neon-edge', 'hsl(' + hue.toFixed(1) + ', 100%, 74%)');
@@ -190,9 +247,10 @@ class HexBoard {
       g.addEventListener('click', () => this._onHexClick(k, g));
 
       this.cells.set(k, {
-        q: p.q, r: p.r, revealed: false, isStart: isStart,
+        q: p.q, r: p.r, revealed: false, isStart: isStart, ikon: erIkon,
         hue: hue, points: this.pointsAttr(inner),
-        el: g, face: face, neon: neon, sheen: sheen, mask: hole, grid: gridLine, halo: halo
+        el: g, face: face, neon: neon, sheen: sheen, mask: hole, grid: gridLine,
+        halo: halo, merke: merke, ikonEl: ikonEl
       });
     });
 
@@ -204,6 +262,7 @@ class HexBoard {
     this.svg.appendChild(hexEl('rect', {
       class: 'fog-vignette', x: minX, y: minY, width: w, height: h
     }));
+    this.svg.appendChild(merkeGroup);
     this.fxGroup = hexEl('g', { class: 'fx-layer' });
     this.svg.appendChild(this.fxGroup);
     this.svg.appendChild(hexGroup);
@@ -424,6 +483,7 @@ class HexBoard {
   }
 
   _updateReachable(){
+    const apne = [];
     this.cells.forEach((cell, k) => {
       if (cell.revealed) return;
       // Før første rute er løst er startruta den eneste åpne. Ringene rundt
@@ -433,8 +493,29 @@ class HexBoard {
         : this.neighbors(cell.q, cell.r).some(([nq, nr]) => this.isRevealed(hexKey(nq, nr)));
       cell.el.classList.toggle('reachable', reach);
       cell.el.classList.toggle('locked', !reach);
+
+      // Regnestykket/ikonet vises bare på ruter som faktisk er åpne, slik
+      // at barnet kan velge mellom dem som lyser.
+      if (cell.ikonEl) cell.ikonEl.classList.toggle('synlig', reach);
+      else cell.merke.classList.toggle('synlig', reach && cell.merke.textContent !== '');
+
+      if (reach) apne.push(k);
     });
     this._updateFogDensity();
+    if (this.onReachable) this.onReachable(apne);
+  }
+
+  // Spillet setter teksten - motoren vet ingenting om hva som står i den.
+  setLabel(k, tekst){
+    const cell = this.cells.get(k);
+    if (!cell || cell.ikon) return;
+    cell.merke.textContent = tekst;
+    // Lange stykker som "100 - 45" må krympe for å få plass i ruta, mens
+    // korte skal stå så store som mulig.
+    const n = tekst.length;
+    const faktor = n <= 5 ? 0.36 : n <= 7 ? 0.32 : 0.27;
+    cell.merke.setAttribute('font-size', (this.size * faktor).toFixed(1));
+    cell.merke.classList.toggle('synlig', !cell.revealed && cell.el.classList.contains('reachable'));
   }
 
   // Ringbølge som slår utover idet en rute løses. Elementet lever bare så
@@ -447,7 +528,9 @@ class HexBoard {
       stroke: 'hsl(' + cell.hue.toFixed(1) + ', 100%, 66%)'
     });
     this.fxGroup.appendChild(ring);
-    ring.addEventListener('animationend', () => ring.remove(), { once: true });
+    const fjern = () => ring.remove();
+    ring.addEventListener('animationend', fjern, { once: true });
+    setTimeout(fjern, 1600);
   }
 
   _emitProgress(){
@@ -478,7 +561,20 @@ class HexBoard {
 
     cell.neon.classList.add('lit');
     cell.sheen.classList.add('lit');
-    cell.neon.addEventListener('animationend', () => cell.neon.classList.add('settled'), { once: true });
+
+    // Stykket forsvinner når ruta er løst, men ikonet blir liggende igjen
+    // som en liten markør på den ferdige flata.
+    cell.merke.classList.remove('synlig');
+    cell.merke.textContent = '';
+    if (cell.ikonEl){
+      cell.ikonEl.classList.add('synlig', 'lost');
+    }
+    // Pustingen skal starte selv om animationend aldri kommer (f.eks. hvis
+    // fanen er i bakgrunnen mens ruta åpnes).
+    const settle = () => cell.neon.classList.add('settled');
+    cell.neon.addEventListener('animationend', settle, { once: true });
+    setTimeout(settle, 1300);
+
     this._ripple(cell);
 
     cell.mask.classList.remove('revealing');

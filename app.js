@@ -6,7 +6,7 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 11;
+const VERSJON = 12;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 const NIVA_LAGER = 'hex-niva';
@@ -36,6 +36,10 @@ let aktivOppgave = null;   // { rute, fasit, tekst }
 let innTastet = '';
 let forrigeTekst = '';
 
+// Hver åpne rute har sitt eget stykke, slik at barnet kan se dem alle og
+// velge hvilken det vil regne ut. Stykket står fast til ruta er løst.
+const ruteOppgaver = new Map();
+
 /* ---------- Alderstrinn ---------- */
 
 function lesLagretNiva(){
@@ -62,8 +66,37 @@ function byggNivaVelger(){
       lagreNiva(n.id);
       nivaVelger.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
       knapp.classList.add('active');
+      byttNivaPaApneRuter();
     });
     nivaVelger.appendChild(knapp);
+  });
+}
+
+/* ---------- Stykker ute på brettet ---------- */
+
+function giRuteOppgave(ruteNokkel){
+  const oppgave = Matte.lagOppgave(niva, forrigeTekst);
+  forrigeTekst = oppgave.tekst;
+  ruteOppgaver.set(ruteNokkel, oppgave);
+  board.setLabel(ruteNokkel, oppgave.tekst);
+}
+
+// Åpne ruter uten stykke får ett. Ikon-rutene hoppes over - de er gratis.
+function fordelOppgaver(apneNokler){
+  apneNokler.forEach(nokkel => {
+    const rute = board.cells.get(nokkel);
+    if (!rute || rute.ikon) return;
+    if (!ruteOppgaver.has(nokkel)) giRuteOppgave(nokkel);
+  });
+}
+
+// Bytter man alderstrinn midt i spillet, skal stykkene som står ute
+// følge det nye nivået.
+function byttNivaPaApneRuter(){
+  board.cells.forEach((rute, nokkel) => {
+    if (rute.revealed || rute.ikon) return;
+    if (!rute.el.classList.contains('reachable')) return;
+    giRuteOppgave(nokkel);
   });
 }
 
@@ -87,8 +120,12 @@ function visSvar(){
 }
 
 function apneOppgave(ruteNokkel){
-  const oppgave = Matte.lagOppgave(niva, forrigeTekst);
-  forrigeTekst = oppgave.tekst;
+  // Kortet viser det samme stykket som står ute på ruta.
+  let oppgave = ruteOppgaver.get(ruteNokkel);
+  if (!oppgave){
+    giRuteOppgave(ruteNokkel);
+    oppgave = ruteOppgaver.get(ruteNokkel);
+  }
   aktivOppgave = { rute: ruteNokkel, fasit: oppgave.fasit, tekst: oppgave.tekst };
   innTastet = '';
 
@@ -138,6 +175,7 @@ function sjekkSvar(){
   if (parseInt(innTastet, 10) === aktivOppgave.fasit){
     const rute = aktivOppgave.rute;
     aktivOppgave = null;
+    ruteOppgaver.delete(rute);
     oppgaveMelding.textContent = 'Riktig!';
     oppgaveMelding.className = 'oppgave-melding riktig';
     setTimeout(() => { lukkOppgave(); board.reveal(rute); }, 420);
@@ -154,7 +192,14 @@ function sjekkSvar(){
 
 /* ---------- Brettet ---------- */
 
-board.onRequestReveal = apneOppgave;
+board.onReachable = fordelOppgaver;
+
+board.onRequestReveal = nokkel => {
+  const rute = board.cells.get(nokkel);
+  // Ikon-ruter er gratis: de åpner seg uten regnestykke.
+  if (rute && rute.ikon){ board.reveal(nokkel); return; }
+  apneOppgave(nokkel);
+};
 
 board.onProgress = (avdekket, totalt) => {
   progressFill.style.width = (avdekket / totalt * 100).toFixed(1) + '%';
@@ -169,6 +214,7 @@ function nyttBrett(){
   winOverlay.hidden = true;
   lukkOppgave();
   forrigeTekst = '';
+  ruteOppgaver.clear();
   board.build(RADII[sizeSelect.value]);
 }
 
