@@ -136,12 +136,13 @@ class HexBoard {
       });
       faceGroup.appendChild(face);
 
-      // Neonfargen vandrer på tvers av brettet, så de løste rutene til
-      // sammen bygger opp én sammenhengende fargeflate i stedet for å
-      // være like. Innenfor hver rute forskyves fargetonen gjennom
-      // gradienten - det er det som gir den sjatterte dybden.
+      // Neonfargen vandrer på tvers av brettet innenfor det grønne
+      // temaet (lime -> smaragd -> jade), så de løste rutene til sammen
+      // bygger opp én sammenhengende fargeflate i stedet for å være like.
+      // Innenfor hver rute forskyves fargetonen gjennom gradienten - det
+      // er det som gir den sjatterte dybden.
       const sweep = ((p.x - minX) / w) * 0.62 + ((p.y - minY) / h) * 0.38;
-      const hue = 248 + sweep * 96 + (Math.random() * 9 - 4.5);
+      const hue = 78 + sweep * 97 + (Math.random() * 9 - 4.5);
       this._buildNeonGradients(defs, k, hue);
 
       const neon = hexEl('polygon', {
@@ -151,7 +152,17 @@ class HexBoard {
       });
       neon.style.setProperty('--breathe', (9 + Math.random() * 6).toFixed(1) + 's');
       neon.style.setProperty('--breathe-delay', (Math.random() * 5).toFixed(1) + 's');
+      neon.style.setProperty('--neon-glow', 'hsla(' + hue.toFixed(1) + ', 95%, 52%, .7)');
       neonGroup.appendChild(neon);
+
+      // Glansstripe over øvre del av flaten - gir ruta et glassaktig,
+      // belyst preg i stedet for en flat farget flate.
+      const sheen = hexEl('polygon', {
+        class: 'hex-sheen' + (isStart ? ' lit' : ''),
+        points: this.pointsAttr(inner),
+        fill: 'url(#hexTileSheen)'
+      });
+      neonGroup.appendChild(sheen);
 
       // Rutenettet ligger UNDER tåken og tones ned med avstanden fra det
       // utforskede - man aner naborutene, ikke hele brettet.
@@ -182,8 +193,8 @@ class HexBoard {
       g.addEventListener('click', () => this._onHexClick(k, g));
 
       this.cells.set(k, {
-        q: p.q, r: p.r, revealed: isStart,
-        el: g, face: face, neon: neon, mask: hole, grid: gridLine, halo: halo
+        q: p.q, r: p.r, revealed: isStart, hue: hue, points: this.pointsAttr(inner),
+        el: g, face: face, neon: neon, sheen: sheen, mask: hole, grid: gridLine, halo: halo
       });
     });
 
@@ -195,6 +206,8 @@ class HexBoard {
     this.svg.appendChild(hexEl('rect', {
       class: 'fog-vignette', x: minX, y: minY, width: w, height: h
     }));
+    this.fxGroup = hexEl('g', { class: 'fx-layer' });
+    this.svg.appendChild(this.fxGroup);
     this.svg.appendChild(hexGroup);
 
     this.revealedCount = 1;
@@ -203,10 +216,19 @@ class HexBoard {
   }
 
   _buildDefs(defs, minX, minY, w, h){
+    // Klikkbar kant holdes i den lyse mint/cyan-enden, så den skiller seg
+    // fra de fylte smaragdgrønne rutene selv om begge er i grønnfamilien.
     const edgeGrad = hexEl('linearGradient', { id: 'hexEdgeGrad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
-    edgeGrad.appendChild(hexEl('stop', { offset: '0%', 'stop-color': '#52e08e' }));
-    edgeGrad.appendChild(hexEl('stop', { offset: '100%', 'stop-color': '#4ff0e4' }));
+    edgeGrad.appendChild(hexEl('stop', { offset: '0%', 'stop-color': '#7dffc4' }));
+    edgeGrad.appendChild(hexEl('stop', { offset: '100%', 'stop-color': '#5ff5ea' }));
     defs.appendChild(edgeGrad);
+
+    const tileSheen = hexEl('linearGradient', { id: 'hexTileSheen', x1: '14%', y1: '0%', x2: '58%', y2: '100%' });
+    tileSheen.appendChild(hexEl('stop', { offset: '0%', 'stop-color': '#ffffff', 'stop-opacity': '.30' }));
+    tileSheen.appendChild(hexEl('stop', { offset: '34%', 'stop-color': '#ffffff', 'stop-opacity': '.07' }));
+    tileSheen.appendChild(hexEl('stop', { offset: '58%', 'stop-color': '#ffffff', 'stop-opacity': '0' }));
+    tileSheen.appendChild(hexEl('stop', { offset: '100%', 'stop-color': '#000000', 'stop-opacity': '.18' }));
+    defs.appendChild(tileSheen);
 
     const faceOpen = hexEl('radialGradient', { id: 'hexFaceOpen', cx: '50%', cy: '38%', r: '70%' });
     faceOpen.appendChild(hexEl('stop', { offset: '0%', 'stop-color': '#12202a' }));
@@ -293,22 +315,26 @@ class HexBoard {
     const cx = (30 + Math.random() * 16).toFixed(0);
     const cy = (22 + Math.random() * 16).toFixed(0);
 
+    // Grønt oppleves lysere enn fiolett ved samme lyshet, så stoppene
+    // ligger lavere her enn en ren omregning ville gitt.
     const fill = hexEl('radialGradient', { id: 'hexFill-' + id, cx: cx + '%', cy: cy + '%', r: '88%' });
+    // Stort spenn i lyshet OG ~50 graders dreining i fargetone fra kjerne
+    // til rand: lime i lyspunktet, dyp jadegrønn ute i kanten.
     [
-      ['0%',   hsl(hue + 16, 96, 76)],
-      ['24%',  hsl(hue + 5, 95, 60)],
-      ['54%',  hsl(hue - 9, 90, 41)],
-      ['80%',  hsl(hue - 20, 85, 25)],
-      ['100%', hsl(hue - 30, 78, 14)]
+      ['0%',   hsl(hue + 18, 90, 72)],
+      ['22%',  hsl(hue + 6, 95, 51)],
+      ['52%',  hsl(hue - 12, 92, 33)],
+      ['80%',  hsl(hue - 24, 88, 18)],
+      ['100%', hsl(hue - 34, 82, 9)]
     ].forEach(([offset, color]) => {
       fill.appendChild(hexEl('stop', { offset: offset, 'stop-color': color }));
     });
     defs.appendChild(fill);
 
     const halo = hexEl('radialGradient', { id: 'hexHalo-' + id, cx: '50%', cy: '50%', r: '50%' });
-    halo.appendChild(hexEl('stop', { offset: '0%', 'stop-color': hsl(hue, 100, 68), 'stop-opacity': '.42' }));
-    halo.appendChild(hexEl('stop', { offset: '42%', 'stop-color': hsl(hue + 8, 96, 60), 'stop-opacity': '.16' }));
-    halo.appendChild(hexEl('stop', { offset: '100%', 'stop-color': hsl(hue + 14, 92, 55), 'stop-opacity': '0' }));
+    halo.appendChild(hexEl('stop', { offset: '0%', 'stop-color': hsl(hue, 100, 58), 'stop-opacity': '.46' }));
+    halo.appendChild(hexEl('stop', { offset: '42%', 'stop-color': hsl(hue + 8, 96, 52), 'stop-opacity': '.18' }));
+    halo.appendChild(hexEl('stop', { offset: '100%', 'stop-color': hsl(hue + 14, 92, 48), 'stop-opacity': '0' }));
     defs.appendChild(halo);
   }
 
@@ -406,6 +432,19 @@ class HexBoard {
     this._updateFogDensity();
   }
 
+  // Ringbølge som slår utover idet en rute løses. Elementet lever bare så
+  // lenge animasjonen varer.
+  _ripple(cell){
+    if (!this.fxGroup) return;
+    const ring = hexEl('polygon', {
+      class: 'hex-ripple',
+      points: cell.points,
+      stroke: 'hsl(' + cell.hue.toFixed(1) + ', 100%, 66%)'
+    });
+    this.fxGroup.appendChild(ring);
+    ring.addEventListener('animationend', () => ring.remove(), { once: true });
+  }
+
   _emitProgress(){
     if (this.onProgress) this.onProgress(this.revealedCount, this.total);
     if (this.revealedCount === this.total && this.onComplete) this.onComplete();
@@ -433,7 +472,9 @@ class HexBoard {
     cell.halo.classList.add('lit');
 
     cell.neon.classList.add('lit');
+    cell.sheen.classList.add('lit');
     cell.neon.addEventListener('animationend', () => cell.neon.classList.add('settled'), { once: true });
+    this._ripple(cell);
 
     cell.mask.classList.remove('revealing');
     void cell.mask.getBoundingClientRect();

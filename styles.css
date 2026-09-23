@@ -130,7 +130,8 @@ select#sizeSelect:hover{ border-color: var(--cyan); }
 }
 .progress-fill{
   height: 100%;
-  background: linear-gradient(90deg, var(--green), var(--cyan));
+  background: linear-gradient(90deg, #3ecf7a, var(--green), var(--cyan));
+  box-shadow: 0 0 10px rgba(82,224,142,.55);
   width: 0%;
   transition: width .5s ease;
 }
@@ -169,7 +170,7 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
 /* stroke-opacity settes fra JS ut fra avstand til utforsket område. */
 .hex-grid-line{
   fill: none;
-  stroke: #9db4d8;
+  stroke: #93b8b2;
   stroke-opacity: 0;
   stroke-width: 1.2;
   transition: stroke-opacity .9s ease;
@@ -218,6 +219,10 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   transform-box: fill-box;
   transform-origin: center;
   pointer-events: none;
+  /* Mørk innerrand: gjør at flaten leses som en innfelt plate. */
+  stroke: rgba(0,0,0,.42);
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 7px var(--neon-glow, transparent));
 }
 .hex-neon.lit{
   opacity: 1;
@@ -232,9 +237,33 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   38%{ opacity: 1; filter: brightness(1.75) saturate(1.3); transform: scale(1.07); }
   100%{ opacity: 1; filter: brightness(1) saturate(1); transform: scale(1); }
 }
+/* Pustingen animerer BARE opacity. Å animere filter her ville tvunget
+   ny filterberegning hver frame for hver eneste løste rute. */
 @keyframes hexNeonBreathe{
-  0%, 100%{ opacity: .88; filter: brightness(.94); }
-  50%{ opacity: 1; filter: brightness(1.1); }
+  0%, 100%{ opacity: .87; }
+  50%{ opacity: 1; }
+}
+
+/* Glansstripa ligger over neonfyllet. */
+.hex-sheen{
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.3s ease;
+}
+.hex-sheen.lit{ opacity: 1; }
+
+/* Ringbølgen som slår utover når en rute løses. */
+.hex-ripple{
+  fill: none;
+  stroke-width: 2.4;
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+  animation: hexRipple 1.05s cubic-bezier(.16,.7,.3,1) forwards;
+}
+@keyframes hexRipple{
+  0%{ transform: scale(.94); opacity: .85; stroke-width: 3.2; }
+  100%{ transform: scale(2.3); opacity: 0; stroke-width: .6; }
 }
 
 /* Tåkefeltet: ett sammenhengende lag over hele brettet, ikke én lapp per

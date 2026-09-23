@@ -7,7 +7,7 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 8;
+const VERSJON = 9;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 
