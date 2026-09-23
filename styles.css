@@ -73,6 +73,19 @@ body{
   color: var(--muted);
   font-weight: 500;
 }
+.version{
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--cyan);
+  background: rgba(79,240,228,.1);
+  border: 1px solid rgba(79,240,228,.28);
+  border-radius: 999px;
+  padding: 2px 7px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
 
 .controls{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
@@ -143,34 +156,41 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
 .hex.reachable:active{ transform: scale(0.98); }
 .hex .hex-hit{ fill: transparent; }
 
+/* Låste ruter har ingen strek OVER tåken - de vises bare svakt gjennom
+   tåken via rutenettet under (.hex-grid-line). */
 .hex .hex-outline{
   fill: none;
   stroke: var(--edge);
   stroke-width: 1.3;
-  stroke-opacity: .32;
+  stroke-opacity: 0;
   transition: stroke-opacity .3s ease;
 }
+
+.hex-grid-line{
+  fill: none;
+  stroke: #9db4d8;
+  stroke-opacity: .42;
+  stroke-width: 1.2;
+  transition: stroke-opacity .6s ease;
+}
+.hex-grid-line.cleared{ stroke-opacity: 0; }
 /* Klikkbar (mulig å trykke på): stiplet kant som sakte "marsjerer" med
-   klokken rundt hexagonen, pluss en sterk, uregelmessig "elektrisk"
-   vibrerende glød - dette er det eneste stedet den grønn/cyan
-   aksentfargen brukes, så den betyr entydig "her kan du trykke". */
+   klokken rundt hexagonen. Ingen kraftig glød - bare en rolig puls i
+   styrken, i 1/4 av farten den hadde før. */
 .hex.reachable .hex-outline{
   stroke: url(#hexEdgeGrad);
-  stroke-width: 2.6;
+  stroke-width: 2.2;
   stroke-opacity: 1;
   stroke-dasharray: 7 5;
   stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(79,240,228,.35));
   animation:
-    hexPulseGlow 5.2s linear infinite,
+    hexPulseGlow 5.2s ease-in-out infinite,
     hexDashMarch 6s linear infinite;
 }
 @keyframes hexPulseGlow{
-  0%, 100%{ filter: drop-shadow(0 0 5px rgba(79,240,228,.75)) drop-shadow(0 0 13px rgba(82,224,142,.5)); stroke-width: 2.3; }
-  20%{ filter: drop-shadow(0 0 13px rgba(79,240,228,1)) drop-shadow(0 0 26px rgba(82,224,142,.8)); stroke-width: 3.1; }
-  38%{ filter: drop-shadow(0 0 6px rgba(79,240,228,.8)) drop-shadow(0 0 15px rgba(82,224,142,.55)); stroke-width: 2.4; }
-  55%{ filter: drop-shadow(0 0 16px rgba(79,240,228,1)) drop-shadow(0 0 30px rgba(82,224,142,.9)); stroke-width: 3.3; }
-  72%{ filter: drop-shadow(0 0 6px rgba(79,240,228,.75)) drop-shadow(0 0 13px rgba(82,224,142,.5)); stroke-width: 2.4; }
-  86%{ filter: drop-shadow(0 0 12px rgba(79,240,228,.95)) drop-shadow(0 0 22px rgba(82,224,142,.7)); stroke-width: 2.9; }
+  0%, 100%{ stroke-opacity: .68; stroke-width: 1.9; }
+  50%{ stroke-opacity: 1; stroke-width: 2.6; }
 }
 @keyframes hexDashMarch{
   from{ stroke-dashoffset: 0; }
@@ -185,42 +205,57 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   stroke-opacity: .55;
 }
 
-/* Tåken er et eget lag som svever litt over selve ruten: den er alltid
-   litt større enn ruten (fogShape i JS) og kaster en myk skygge ned på
-   gitteret under, i stedet for å ligge flush inni ruten. */
-.fog-layer{
-  filter: drop-shadow(0 3px 7px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(0,0,0,.35));
-}
-.fog-base{ fill: #060810; }
-.hex.reachable .fog-base{ opacity: .82; }
+/* Selve ruteflaten under tåken. */
+.hex-face{ fill: #080b11; }
+.hex-face.open{ fill: url(#hexFaceOpen); transition: fill .6s ease; }
 
-.fog-highlight{
-  fill: url(#hexFogHi);
+/* Tåkefeltet: ett sammenhengende lag over hele brettet, ikke én lapp per
+   rute. To skydrev i ulik skala og fart gir dybde, og masken er uskarp,
+   slik at tåken får myke kanter og legger seg litt over rutene. */
+/* Sløret er bevisst ikke helt ugjennomtrengelig: rutenettet under skal så
+   vidt ane seg gjennom tåken. Ruteflatene er nesten samme mørke tone som
+   sløret, så de forblir skjult uansett. */
+.fog-veil{ fill: #05070d; opacity: .84; }
+
+.fog-cloud{
   mix-blend-mode: screen;
-  opacity: .6;
-  pointer-events: none;
-}
-
-.fog-texture{
-  mix-blend-mode: soft-light;
-  opacity: .6;
   transform-box: fill-box;
   transform-origin: center;
-  animation: hexFogDrift var(--fog-dur,7s) ease-in-out infinite;
-  animation-delay: var(--fog-delay,0s);
 }
-.hex.reachable .fog-texture{ opacity: .4; }
-@keyframes hexFogDrift{
+.fog-cloud-a{
+  opacity: .55;
+  animation: hexFogDriftA 54s ease-in-out infinite;
+}
+.fog-cloud-b{
+  opacity: .3;
+  animation: hexFogDriftB 33s ease-in-out infinite;
+}
+@keyframes hexFogDriftA{
   0%{ transform: translate(0,0) scale(1); }
-  50%{ transform: translate(-1.8%, 1.6%) scale(1.045); }
+  50%{ transform: translate(-3.5%, 2.2%) scale(1.07); }
   100%{ transform: translate(0,0) scale(1); }
 }
-.fog-layer.dissolving{ animation: hexFogDissolve .85s ease-out forwards; }
-@keyframes hexFogDissolve{
-  0%{ opacity: 1; }
-  55%{ opacity: .35; }
-  100%{ opacity: 0; }
+@keyframes hexFogDriftB{
+  0%{ transform: translate(0,0) scale(1.04); }
+  50%{ transform: translate(4.2%, -2.6%) scale(1); }
+  100%{ transform: translate(0,0) scale(1.04); }
 }
+
+.fog-sheen{
+  fill: url(#hexFogSheen);
+  opacity: .8;
+}
+
+/* Masken styrer hvor tåken finnes. Uskarpheten på gruppa (hexMaskBlur)
+   gjør at nabofelter flyter sammen og at kanten mot avdekket område blir
+   myk i stedet for sekskantet. */
+.fogmask-tile{
+  fill: #ffffff;
+  fill-opacity: 1;
+  transition: fill-opacity .9s ease;
+}
+.fogmask-tile.thin{ fill-opacity: .88; }
+.fogmask-tile.cleared{ fill-opacity: 0; }
 
 .hex.shake{ animation: hexShakeX .4s ease; }
 @keyframes hexShakeX{

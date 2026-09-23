@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>HEX</title>
-<meta name="description" content="Løs regnestykker og avdekk en hexagonal stjernehimmel gjennom tåken.">
+<meta name="description" content="Løs regnestykker og avdekk et hexagonalt brett gjennom tåken.">
 <meta name="theme-color" content="#05090a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -25,7 +25,7 @@
     <div class="brand">
       <span class="brand-mark">⬡</span>
       <div>
-        <h1>HEX</h1>
+        <h1>HEX <span class="version" id="version">v6</span></h1>
         <span class="sub">Fase 1 - testmodus: klikk avdekker direkte (matte kommer i fase 2)</span>
       </div>
     </div>
@@ -51,8 +51,8 @@
 
 <div class="win-overlay" id="winOverlay" hidden>
   <div class="win-card">
-    <h2>Himmelen er avdekket!</h2>
-    <p>Alle rutene er avdekket. Hele stjernehimmelen kommer til syne.</p>
+    <h2>Tåken er borte!</h2>
+    <p>Alle rutene på brettet er avdekket.</p>
     <button id="winNewBoard" class="btn-primary">Spill igjen</button>
   </div>
 </div>

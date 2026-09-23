@@ -5,6 +5,10 @@
 // Fase 2 bygger mattemotoren. Fase 3 kobler den inn her:
 //   board.onRequestReveal = (key) => askQuestion(key, () => board.reveal(key));
 
+// Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
+// toppen viser hvilken build som faktisk kjører i nettleseren.
+const VERSJON = 6;
+
 const RADII = { sma: 2, med: 3, sto: 4 };
 
 const svg = document.getElementById('board');
@@ -35,4 +39,9 @@ sizeSelect.addEventListener('change', newBoard);
 newBoardBtn.addEventListener('click', newBoard);
 winNewBoard.addEventListener('click', newBoard);
 
+document.getElementById('version').textContent = 'v' + VERSJON;
 newBoard();
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
