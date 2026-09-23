@@ -7,12 +7,12 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 6;
+const VERSJON = 7;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 
 const svg = document.getElementById('board');
-const board = new HexBoard(svg, { hexSize: 42, gapInset: 0.90 });
+const board = new HexBoard(svg, { hexSize: 46, gapInset: 0.90 });
 
 const progressFill = document.getElementById('progressFill');
 const progressLabel = document.getElementById('progressLabel');

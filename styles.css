@@ -166,14 +166,14 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   transition: stroke-opacity .3s ease;
 }
 
+/* stroke-opacity settes fra JS ut fra avstand til utforsket område. */
 .hex-grid-line{
   fill: none;
   stroke: #9db4d8;
-  stroke-opacity: .42;
+  stroke-opacity: 0;
   stroke-width: 1.2;
-  transition: stroke-opacity .6s ease;
+  transition: stroke-opacity .9s ease;
 }
-.hex-grid-line.cleared{ stroke-opacity: 0; }
 /* Klikkbar (mulig å trykke på): stiplet kant som sakte "marsjerer" med
    klokken rundt hexagonen. Ingen kraftig glød - bare en rolig puls i
    styrken, i 1/4 av farten den hadde før. */
@@ -212,9 +212,16 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
 /* Tåkefeltet: ett sammenhengende lag over hele brettet, ikke én lapp per
    rute. To skydrev i ulik skala og fart gir dybde, og masken er uskarp,
    slik at tåken får myke kanter og legger seg litt over rutene. */
+/* Hele tåkefeltet puster sakte, så bildet aldri står helt stille. */
+.fog-field{ animation: hexFogBreathe 27s ease-in-out infinite; }
+@keyframes hexFogBreathe{
+  0%, 100%{ opacity: .94; }
+  50%{ opacity: 1; }
+}
+
 /* Sløret er bevisst ikke helt ugjennomtrengelig: rutenettet under skal så
-   vidt ane seg gjennom tåken. Ruteflatene er nesten samme mørke tone som
-   sløret, så de forblir skjult uansett. */
+   vidt ane seg der tåken er tynn. Ruteflatene er nesten samme mørke tone
+   som sløret, så de forblir skjult uansett. */
 .fog-veil{ fill: #05070d; opacity: .84; }
 
 .fog-cloud{
@@ -222,23 +229,29 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   transform-box: fill-box;
   transform-origin: center;
 }
-.fog-cloud-a{
-  opacity: .55;
-  animation: hexFogDriftA 54s ease-in-out infinite;
-}
-.fog-cloud-b{
-  opacity: .3;
-  animation: hexFogDriftB 33s ease-in-out infinite;
-}
+/* Fire lag i ulik skala og fart. Ulik retning og tempo gir parallakse,
+   som er det som får tåken til å oppleves som et rom med dybde. */
+.fog-cloud-a{ opacity: .52; animation: hexFogDriftA 64s ease-in-out infinite; }
+.fog-cloud-b{ opacity: .34; animation: hexFogDriftB 41s ease-in-out infinite; }
+.fog-cloud-c{ opacity: .42; animation: hexFogDriftC 97s ease-in-out infinite; }
+.fog-cloud-d{ opacity: .16; animation: hexFogDriftD 150s linear infinite; }
+
 @keyframes hexFogDriftA{
-  0%{ transform: translate(0,0) scale(1); }
-  50%{ transform: translate(-3.5%, 2.2%) scale(1.07); }
-  100%{ transform: translate(0,0) scale(1); }
+  0%, 100%{ transform: translate(0,0) scale(1); }
+  50%{ transform: translate(-3.2%, 2.4%) scale(1.08); }
 }
 @keyframes hexFogDriftB{
-  0%{ transform: translate(0,0) scale(1.04); }
-  50%{ transform: translate(4.2%, -2.6%) scale(1); }
-  100%{ transform: translate(0,0) scale(1.04); }
+  0%, 100%{ transform: translate(0,0) scale(1.05); }
+  50%{ transform: translate(4.4%, -2.8%) scale(1); }
+}
+@keyframes hexFogDriftC{
+  0%, 100%{ transform: translate(2.5%, 1.5%) scale(1.12); }
+  50%{ transform: translate(-2.5%, -2%) scale(1.02); }
+}
+@keyframes hexFogDriftD{
+  0%{ transform: translate(-1.5%, 0) scale(1.04); }
+  50%{ transform: translate(1.5%, -1%) scale(1.04); }
+  100%{ transform: translate(-1.5%, 0) scale(1.04); }
 }
 
 .fog-sheen{
@@ -246,16 +259,37 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   opacity: .8;
 }
 
-/* Masken styrer hvor tåken finnes. Uskarpheten på gruppa (hexMaskBlur)
-   gjør at nabofelter flyter sammen og at kanten mot avdekket område blir
-   myk i stedet for sekskantet. */
-.fogmask-tile{
-  fill: #ffffff;
-  fill-opacity: 1;
-  transition: fill-opacity .9s ease;
+/* Lyset som fanges i tåken rundt en åpnet rute. */
+.hex-halo{
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.4s ease;
 }
-.fogmask-tile.thin{ fill-opacity: .88; }
-.fogmask-tile.cleared{ fill-opacity: 0; }
+.hex-halo.lit{ opacity: 1; }
+
+.fog-vignette{
+  fill: url(#hexVignette);
+  pointer-events: none;
+}
+
+/* Masken styrer hvor tåken finnes: hvit over hele flaten, med svarte hull
+   der ruter er avdekket. fill-opacity settes fra JS ut fra avstanden til
+   nærmeste avdekkede rute, så tåken er lett nær det utforskede og tykk
+   lenger ute. Uskarpheten på maskegruppa gjør hullkantene myke. */
+.fogmask-tile{
+  fill: #000000;
+  fill-opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill-opacity 1.1s ease;
+}
+/* Når en rute avdekkes blåser tåken litt utover før den legger seg. */
+.fogmask-tile.revealing{ animation: hexFogRetreat 1.1s ease-out; }
+@keyframes hexFogRetreat{
+  0%{ transform: scale(.82); }
+  45%{ transform: scale(1.20); }
+  100%{ transform: scale(1); }
+}
 
 .hex.shake{ animation: hexShakeX .4s ease; }
 @keyframes hexShakeX{
