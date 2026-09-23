@@ -186,6 +186,81 @@ select#sizeSelect:hover{ border-color: var(--cyan); }
   border: 1px solid var(--edge);
   border-radius: 20px;
   padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- Sluttsekvensen ---------- */
+
+.finale-canvas{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Rutene har en kjørende pusteanimasjon på opacity, og en animasjon slår
+   inline-stiler i kaskaden - derfor må animasjonen skrus av her. */
+.finale-skjult{
+  animation: none !important;
+  transition: none !important;
+  opacity: 0 !important;
+}
+.finale-uttoning{
+  animation: none !important;
+  transition: opacity .7s ease !important;
+  opacity: 0 !important;
+}
+
+.fog-field.finale-borte{
+  opacity: 0;
+  transition: opacity 1.1s ease;
+}
+
+.finale-lag{
+  cursor: pointer;
+  animation: finaleFram .85s cubic-bezier(.16,.9,.3,1.05) both;
+}
+@keyframes finaleFram{
+  0%{ opacity: 0; transform: scale(.55); }
+  60%{ opacity: 1; }
+  100%{ opacity: 1; transform: scale(1); }
+}
+.finale-lag{ transform-box: fill-box; transform-origin: center; }
+
+.finale-fyll{
+  stroke: rgba(0,0,0,.42);
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 18px rgba(82,224,142,.55));
+}
+
+.finale-kant{
+  fill: none;
+  stroke: url(#hexEdgeGrad);
+  stroke-width: 2.6;
+  stroke-dasharray: 7 5;
+  stroke-linecap: round;
+  animation: hexDashMarch 12s linear infinite;
+}
+
+.finale-tekst{
+  font-family: 'Chakra Petch', 'Segoe UI', sans-serif;
+  font-weight: 700;
+  fill: #06231a;
+  text-anchor: middle;
+  dominant-baseline: central;
+  letter-spacing: .01em;
+  pointer-events: none;
+}
+
+.finale-undertekst{
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  fill: #a6ffc4;
+  text-anchor: middle;
+  dominant-baseline: central;
+  opacity: .85;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(82,224,142,.6));
 }
 svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
 

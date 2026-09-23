@@ -640,6 +640,19 @@ class HexBoard {
     this._emitProgress();
   }
 
+  // Brukes av sluttsekvensen: ruta forsvinner fra SVG-en mens partiklene
+  // overtar. Med mykt=true tones den ut i stedet for å kuttes brått.
+  //
+  // Må gjøres med klasse, ikke inline opacity: rutene har en kjørende
+  // pusteanimasjon på opacity, og en animasjon overstyrer inline-stiler.
+  skjulRute(k, mykt){
+    const cell = this.cells.get(k);
+    if (!cell) return;
+    const klasse = mykt ? 'finale-uttoning' : 'finale-skjult';
+    [cell.face, cell.neon, cell.sheen, cell.halo, cell.el, cell.ikonEl, cell.merke]
+      .forEach(el => { if (el) el.classList.add(klasse); });
+  }
+
   _avdekkVisuelt(cell){
     if (cell.revealed) return;
     cell.revealed = true;

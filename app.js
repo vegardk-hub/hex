@@ -6,7 +6,7 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 15;
+const VERSJON = 16;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 const NIVA_LAGER = 'hex-niva';
@@ -15,12 +15,11 @@ const BRETT_LAGER = 'hex-brett-lost';
 const svg = document.getElementById('board');
 const board = new HexBoard(svg, { hexSize: 46, gapInset: 0.90 });
 
+const brettFlate = document.querySelector('.board-wrap');
 const progressFill = document.getElementById('progressFill');
 const progressLabel = document.getElementById('progressLabel');
-const winOverlay = document.getElementById('winOverlay');
 const sizeSelect = document.getElementById('sizeSelect');
 const newBoardBtn = document.getElementById('newBoardBtn');
-const winNewBoard = document.getElementById('winNewBoard');
 const nivaVelger = document.getElementById('nivaVelger');
 
 const oppgaveLag = document.getElementById('oppgave');
@@ -32,7 +31,9 @@ const oppgaveMelding = document.getElementById('oppgaveMelding');
 const oppgaveAvbryt = document.getElementById('oppgaveAvbryt');
 const tastatur = document.getElementById('tastatur');
 const brettTeller = document.getElementById('brettTeller');
-const winStatus = document.getElementById('winStatus');
+
+// Sluttsekvensen som kjører når et brett er fullført.
+let aktivFinale = null;
 
 let niva = '6-8';
 let aktivOppgave = null;   // { rute, fasit, tekst }
@@ -242,15 +243,22 @@ board.onComplete = () => {
   lagreBrettLost();
   oppdaterBrettTeller();
 
-  winStatus.textContent = brettLost === 1
-    ? 'Ditt første brett er ferdig!'
-    : 'Du har løst ' + brettLost + ' brett.';
+  const status = brettLost === 1 ? 'Ditt første brett!' : brettLost + ' brett løst';
 
-  setTimeout(() => { winOverlay.hidden = false; }, 700);
+  // Vent til den siste ruta har rukket å tenne før alt går i oppløsning.
+  setTimeout(() => {
+    aktivFinale = Finale.start({
+      wrap: brettFlate,
+      svg: svg,
+      board: board,
+      statusTekst: status,
+      paNyttBrett: nyttBrett
+    });
+  }, 900);
 };
 
 function nyttBrett(){
-  winOverlay.hidden = true;
+  if (aktivFinale){ aktivFinale.stopp(); aktivFinale = null; }
   lukkOppgave();
   forrigeTekst = '';
   ruteOppgaver.clear();
@@ -259,7 +267,6 @@ function nyttBrett(){
 
 sizeSelect.addEventListener('change', nyttBrett);
 newBoardBtn.addEventListener('click', nyttBrett);
-winNewBoard.addEventListener('click', nyttBrett);
 oppgaveAvbryt.addEventListener('click', lukkOppgave);
 
 document.addEventListener('keydown', e => {
