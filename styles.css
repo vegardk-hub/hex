@@ -510,6 +510,41 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   50%{ opacity: calc(var(--base-op,.7) * .3); }
 }
 
+/* ---------- Lett modus ---------- */
+
+/* Skrur av all løpende bevegelse og de dyreste glød-filtrene. Tåkas
+   støylag bygges ikke i det hele tatt (se hexgrid.js) - det er det tyngste.
+   Merk at bare animasjonen fjernes, ikke opacity: elementene faller da
+   tilbake på sluttverdien fra sin egen klasse. */
+.lett .fog-field,
+.lett .fog-cloud,
+.lett .hex-neon,
+.lett .hex-neon.lit,
+.lett .hex-neon.settled,
+.lett .hex-outline,
+.lett .finale-kant,
+.lett .fogmask-tile{
+  animation: none !important;
+}
+
+.lett .hex-neon,
+.lett .hex-outline,
+.lett .hex-merketekst,
+.lett .hex-ikon,
+.lett .finale-fyll,
+.lett .finale-undertekst{
+  filter: none !important;
+}
+
+.lett .fog-enkel .fog-veil{ opacity: .9; }
+.lett .hex-halo{ transition: none !important; }
+.lett .hex.reachable:hover{ transform: none; }
+
+.btn-grafikk.aktiv{
+  background: linear-gradient(135deg, rgba(82,224,142,.24), rgba(79,240,228,.22));
+  border-color: rgba(79,240,228,.45);
+}
+
 /* ---------- Statistikk ---------- */
 
 .btn-stat{

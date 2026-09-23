@@ -6,10 +6,11 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 17;
+const VERSJON = 18;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 const NIVA_LAGER = 'hex-niva';
+const LETT_LAGER = 'hex-lett-grafikk';
 
 const svg = document.getElementById('board');
 const board = new HexBoard(svg, { hexSize: 46, gapInset: 0.90 });
@@ -34,6 +35,10 @@ const statLag = document.getElementById('statistikk');
 const statInnhold = document.getElementById('statInnhold');
 const statKnapp = document.getElementById('statKnapp');
 const statLukk = document.getElementById('statLukk');
+const grafikkKnapp = document.getElementById('grafikkKnapp');
+
+// Lett grafikk: for enheter som sliter med de bevegelige lagene.
+let lettGrafikk = false;
 
 // Sluttsekvensen som kjører når et brett er fullført.
 let aktivFinale = null;
@@ -226,6 +231,31 @@ function sjekkSvar(){
   rist();
 }
 
+/* ---------- Grafikkmodus ---------- */
+
+function settGrafikk(lett, lagre){
+  lettGrafikk = !!lett;
+  document.documentElement.classList.toggle('lett', lettGrafikk);
+  grafikkKnapp.classList.toggle('aktiv', lettGrafikk);
+  grafikkKnapp.setAttribute('aria-pressed', lettGrafikk ? 'true' : 'false');
+  grafikkKnapp.title = lettGrafikk
+    ? 'Lettere grafikk er på - trykk for full grafikk'
+    : 'Full grafikk - trykk for lettere grafikk';
+
+  // Bytter tåkelaget uten å bygge brettet på nytt, så et spill i gang
+  // ikke går tapt.
+  board.settLettModus(lettGrafikk);
+
+  if (lagre){
+    try { localStorage.setItem(LETT_LAGER, lettGrafikk ? '1' : '0'); } catch (e) {}
+  }
+}
+
+function lesLettGrafikk(){
+  try { return localStorage.getItem(LETT_LAGER) === '1'; } catch (e) {}
+  return false;
+}
+
 /* ---------- Statistikk-panelet ---------- */
 
 // Identiteten bæres av tekstetiketten, ikke av farge: alle søylene har
@@ -331,7 +361,8 @@ board.onComplete = () => {
       svg: svg,
       board: board,
       statusTekst: status,
-      paNyttBrett: nyttBrett
+      paNyttBrett: nyttBrett,
+      lett: lettGrafikk
     });
   }, 900);
 };
@@ -348,6 +379,7 @@ sizeSelect.addEventListener('change', nyttBrett);
 newBoardBtn.addEventListener('click', nyttBrett);
 oppgaveAvbryt.addEventListener('click', lukkOppgave);
 
+grafikkKnapp.addEventListener('click', () => settGrafikk(!lettGrafikk, true));
 statKnapp.addEventListener('click', apneStatistikk);
 statLukk.addEventListener('click', lukkStatistikk);
 statLag.addEventListener('click', e => { if (e.target === statLag) lukkStatistikk(); });
@@ -366,6 +398,7 @@ document.addEventListener('keydown', e => {
 
 niva = lesLagretNiva();
 Statistikk.start();
+settGrafikk(lesLettGrafikk(), false);
 byggNivaVelger();
 oppdaterBrettTeller();
 byggTastatur();

@@ -81,6 +81,10 @@ class HexBoard {
     this.size = opts.hexSize || 46;
     this.gapInset = opts.gapInset || 0.90;
     this.fogOverhang = opts.fogOverhang || 1.05;
+
+    // Lett modus: tåkas støylag droppes helt og maskens uskarphet settes
+    // ned. Det er disse to som koster mest å tegne.
+    this.lett = !!opts.lett;
     this.cells = new Map();
     this.total = 0;
     this.revealedCount = 0;
@@ -265,10 +269,13 @@ class HexBoard {
       });
     });
 
+    this.rammer = { minX: minX, minY: minY, w: w, h: h };
+    this.fogFeltEl = this._buildFogField(minX, minY, w, h);
+
     this.svg.appendChild(faceGroup);
     this.svg.appendChild(neonGroup);
     this.svg.appendChild(gridGroup);
-    this.svg.appendChild(this._buildFogField(minX, minY, w, h));
+    this.svg.appendChild(this.fogFeltEl);
     this.svg.appendChild(haloGroup);
     this.svg.appendChild(hexEl('rect', {
       class: 'fog-vignette', x: minX, y: minY, width: w, height: h
@@ -323,6 +330,10 @@ class HexBoard {
 
     // Fire tåkelag. Rekkefølge: dype skyer, virvlende slør, tette kjerner
     // (der tåken er tykkest og sprer lys), og fin korning på toppen.
+    //
+    // Definisjonene lages alltid. Et filter koster ingenting så lenge ingen
+    // elementer bruker det, og i lett modus droppes selve skylagene - men
+    // slår man full grafikk på igjen må filtrene finnes å peke på.
     defs.appendChild(this._fogFilter({
       id: 'hexFogA', frequency: '0.0055 0.0085', octaves: 3,
       warpFrequency: '0.004', warpOctaves: 2, warpScale: 55,
@@ -368,7 +379,9 @@ class HexBoard {
       id: 'hexMaskBlur', x: '-15%', y: '-15%', width: '130%', height: '130%',
       'color-interpolation-filters': 'sRGB'
     });
-    maskBlur.appendChild(hexEl('feGaussianBlur', { stdDeviation: String(this.size * 0.13) }));
+    maskBlur.appendChild(hexEl('feGaussianBlur', {
+      stdDeviation: String(this.size * (this.lett ? 0.05 : 0.13))
+    }));
     defs.appendChild(maskBlur);
 
     // Masken: hvitt over HELE flaten (tåke overalt - brettets størrelse
@@ -464,7 +477,10 @@ class HexBoard {
   }
 
   _buildFogField(minX, minY, w, h){
-    const field = hexEl('g', { class: 'fog-field', mask: 'url(#hexFogMask)' });
+    const field = hexEl('g', {
+      class: 'fog-field' + (this.lett ? ' fog-enkel' : ''),
+      mask: 'url(#hexFogMask)'
+    });
     const pad = this.size * 3;
     const cloud = (cls, filterId) => hexEl('rect', {
       class: 'fog-cloud ' + cls,
@@ -473,12 +489,30 @@ class HexBoard {
     });
 
     field.appendChild(hexEl('rect', { class: 'fog-veil', x: minX, y: minY, width: w, height: h }));
-    field.appendChild(cloud('fog-cloud-a', 'hexFogA'));
-    field.appendChild(cloud('fog-cloud-b', 'hexFogB'));
-    field.appendChild(cloud('fog-cloud-c', 'hexFogC'));
-    field.appendChild(cloud('fog-cloud-d', 'hexFogD'));
+    if (!this.lett){
+      field.appendChild(cloud('fog-cloud-a', 'hexFogA'));
+      field.appendChild(cloud('fog-cloud-b', 'hexFogB'));
+      field.appendChild(cloud('fog-cloud-c', 'hexFogC'));
+      field.appendChild(cloud('fog-cloud-d', 'hexFogD'));
+    }
     field.appendChild(hexEl('rect', { class: 'fog-sheen', x: minX, y: minY, width: w, height: h }));
     return field;
+  }
+
+  // Bytter modus uten å bygge brettet på nytt, så et spill i gang ikke går
+  // tapt. Bare tåkelaget og maskens uskarphet berøres.
+  settLettModus(lett){
+    if (this.lett === !!lett) return;
+    this.lett = !!lett;
+    if (!this.fogFeltEl || !this.rammer) return;
+
+    const r = this.rammer;
+    const nytt = this._buildFogField(r.minX, r.minY, r.w, r.h);
+    this.fogFeltEl.replaceWith(nytt);
+    this.fogFeltEl = nytt;
+
+    const blur = this.svg.querySelector('#hexMaskBlur feGaussianBlur');
+    if (blur) blur.setAttribute('stdDeviation', String(this.size * (this.lett ? 0.05 : 0.13)));
   }
 
   // Avstand i ruter fra nærmeste avdekkede rute, brukt til å styre både

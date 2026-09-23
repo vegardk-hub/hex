@@ -10,6 +10,7 @@
 // Flere og mindre biter gir en finere oppløsning. Et stort brett gir da
 // rundt 1800 partikler - greit på canvas, der de fleste bare er fillRect.
 const FINALE_PARTIKLER_PER_RUTE = 30;
+const FINALE_PARTIKLER_LETT = 8;
 const FINALE_TICK = 45;          // ms mellom hver pulje ruter som sprenges
 const FINALE_PULJER = 22;        // brettet brytes ned på omtrent like lang tid uansett størrelse
 const FINALE_TYNGDE = 210;       // px/s^2
@@ -30,6 +31,7 @@ class FinaleSekvens {
     this.board = opts.board;
     this.statusTekst = opts.statusTekst || '';
     this.paNyttBrett = opts.paNyttBrett;
+    this.antallPerRute = opts.lett ? FINALE_PARTIKLER_LETT : FINALE_PARTIKLER_PER_RUTE;
 
     this.partikler = [];
     this.koe = [];
@@ -140,7 +142,7 @@ class FinaleSekvens {
   _lagPartikler(boks, hue){
     const sx = this.bredde / 2, sy = this.hoyde / 2;
 
-    for (let i = 0; i < FINALE_PARTIKLER_PER_RUTE; i++){
+    for (let i = 0; i < this.antallPerRute; i++){
       const x = boks.x + Math.random() * boks.w;
       const y = boks.y + Math.random() * boks.h;
 

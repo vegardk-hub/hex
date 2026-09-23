@@ -1,7 +1,7 @@
 // Bump CACHE og VERSJON i app.js sammen ved hver endring.
 // Nettverk-først: du ser alltid siste versjon når du er på nett, og cachen
 // er bare en reserve når du er offline.
-const CACHE = 'hex-v17';
+const CACHE = 'hex-v18';
 const FILER = ['./', 'index.html', 'styles.css', 'statistikk.js', 'matte.js', 'hexgrid.js', 'finale.js', 'app.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
