@@ -130,10 +130,7 @@ class HexBoard {
       const holeShape = this.insetCorners(outer, p.x, p.y, this.fogOverhang);
       const isStart = k === start;
 
-      const face = hexEl('polygon', {
-        class: 'hex-face' + (isStart ? ' open' : ''),
-        points: this.pointsAttr(inner)
-      });
+      const face = hexEl('polygon', { class: 'hex-face', points: this.pointsAttr(inner) });
       faceGroup.appendChild(face);
 
       // Neonfargen vandrer på tvers av brettet innenfor det grønne
@@ -146,7 +143,7 @@ class HexBoard {
       this._buildNeonGradients(defs, k, hue);
 
       const neon = hexEl('polygon', {
-        class: 'hex-neon' + (isStart ? ' lit settled' : ''),
+        class: 'hex-neon',
         points: this.pointsAttr(inner),
         fill: 'url(#hexFill-' + k.replace(',', '_') + ')'
       });
@@ -158,7 +155,7 @@ class HexBoard {
       // Glansstripe over øvre del av flaten - gir ruta et glassaktig,
       // belyst preg i stedet for en flat farget flate.
       const sheen = hexEl('polygon', {
-        class: 'hex-sheen' + (isStart ? ' lit' : ''),
+        class: 'hex-sheen',
         points: this.pointsAttr(inner),
         fill: 'url(#hexTileSheen)'
       });
@@ -176,13 +173,13 @@ class HexBoard {
       // Lysglorien ligger OVER tåken, i rutas egen neonfarge, så lyset fra
       // en løst rute ser ut til å fanges i tåken rundt den.
       const halo = hexEl('polygon', {
-        class: 'hex-halo' + (isStart ? ' lit' : ''),
+        class: 'hex-halo',
         points: this.pointsAttr(this.insetCorners(outer, p.x, p.y, 1.9)),
         fill: 'url(#hexHalo-' + k.replace(',', '_') + ')'
       });
       haloGroup.appendChild(halo);
 
-      const g = hexEl('g', { class: 'hex' + (isStart ? ' revealed' : ' locked') });
+      const g = hexEl('g', { class: 'hex locked' });
       g.dataset.q = p.q; g.dataset.r = p.r;
       g.style.setProperty('--neon-edge', 'hsl(' + hue.toFixed(1) + ', 100%, 74%)');
       g.style.setProperty('--neon-glow', 'hsla(' + hue.toFixed(1) + ', 100%, 62%, .75)');
@@ -193,7 +190,8 @@ class HexBoard {
       g.addEventListener('click', () => this._onHexClick(k, g));
 
       this.cells.set(k, {
-        q: p.q, r: p.r, revealed: isStart, hue: hue, points: this.pointsAttr(inner),
+        q: p.q, r: p.r, revealed: false, isStart: isStart,
+        hue: hue, points: this.pointsAttr(inner),
         el: g, face: face, neon: neon, sheen: sheen, mask: hole, grid: gridLine, halo: halo
       });
     });
@@ -210,7 +208,7 @@ class HexBoard {
     this.svg.appendChild(this.fxGroup);
     this.svg.appendChild(hexGroup);
 
-    this.revealedCount = 1;
+    this.revealedCount = 0;
     this._updateReachable();
     this._emitProgress();
   }
@@ -416,7 +414,10 @@ class HexBoard {
     }
 
     this.cells.forEach((cell, k) => {
-      const d = dist.has(k) ? dist.get(k) : 99;
+      // Ingenting er løst ennå: bare startruta har en åpning i tåken.
+      const d = this.revealedCount === 0
+        ? (cell.isStart ? 1 : 99)
+        : (dist.has(k) ? dist.get(k) : 99);
       cell.mask.style.fillOpacity = d < HOLE_BY_DIST.length ? HOLE_BY_DIST[d] : 0;
       cell.grid.style.strokeOpacity = d < GRID_BY_DIST.length ? GRID_BY_DIST[d] : 0;
     });
@@ -425,7 +426,11 @@ class HexBoard {
   _updateReachable(){
     this.cells.forEach((cell, k) => {
       if (cell.revealed) return;
-      const reach = this.neighbors(cell.q, cell.r).some(([nq, nr]) => this.isRevealed(hexKey(nq, nr)));
+      // Før første rute er løst er startruta den eneste åpne. Ringene rundt
+      // naborutene dukker altså først opp når den første oppgaven er løst.
+      const reach = this.revealedCount === 0
+        ? !!cell.isStart
+        : this.neighbors(cell.q, cell.r).some(([nq, nr]) => this.isRevealed(hexKey(nq, nr)));
       cell.el.classList.toggle('reachable', reach);
       cell.el.classList.toggle('locked', !reach);
     });

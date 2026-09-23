@@ -89,6 +89,33 @@ body{
 
 .controls{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
+.chip-group{
+  display: flex;
+  gap: 5px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--edge);
+  background: rgba(0,0,0,.25);
+}
+.chip{
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: color .15s ease, background .15s ease;
+}
+.chip:hover{ color: var(--ink); }
+.chip.active{
+  color: var(--ink);
+  background: linear-gradient(135deg, rgba(82,224,142,.24), rgba(79,240,228,.22));
+  box-shadow: inset 0 0 0 1px rgba(79,240,228,.4);
+}
+
 select#sizeSelect{
   font-family: inherit;
   font-weight: 700;
@@ -240,7 +267,7 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
 /* Pustingen animerer BARE opacity. Å animere filter her ville tvunget
    ny filterberegning hver frame for hver eneste løste rute. */
 @keyframes hexNeonBreathe{
-  0%, 100%{ opacity: .87; }
+  0%, 100%{ opacity: .93; }
   50%{ opacity: 1; }
 }
 
@@ -365,6 +392,123 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   0%,100%{ opacity: var(--base-op,.7); }
   50%{ opacity: calc(var(--base-op,.7) * .3); }
 }
+
+/* ---------- Oppgavekortet ---------- */
+
+.oppgave-bakgrunn{
+  position: fixed; inset: 0;
+  background: rgba(3,7,10,.74);
+  backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  z-index: 45;
+}
+
+.oppgave-kort{
+  --rute-farge: var(--green);
+  width: 100%; max-width: 330px;
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--edge);
+  border-radius: 22px;
+  padding: 20px 18px 16px;
+  text-align: center;
+  box-shadow: 0 18px 50px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03);
+  animation: oppgaveInn .26s cubic-bezier(.2,.9,.3,1);
+}
+@keyframes oppgaveInn{
+  from{ opacity: 0; transform: translateY(14px) scale(.96); }
+  to{ opacity: 1; transform: none; }
+}
+.oppgave-kort.rister{ animation: oppgaveRist .42s ease; }
+@keyframes oppgaveRist{
+  0%,100%{ transform: translateX(0); }
+  22%{ transform: translateX(-7px); }
+  44%{ transform: translateX(7px); }
+  66%{ transform: translateX(-4px); }
+  85%{ transform: translateX(4px); }
+}
+
+/* Merket tar fargetonen til ruta oppgaven gjelder. */
+.oppgave-merke{
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 11px;
+  font-family: 'Chakra Petch', 'Segoe UI', sans-serif;
+  font-size: 19px; font-weight: 700;
+  color: var(--rute-farge);
+  background: color-mix(in srgb, var(--rute-farge) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rute-farge) 35%, transparent);
+  margin-bottom: 12px;
+}
+
+.oppgave-stykke{
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: clamp(30px, 9vw, 40px);
+  letter-spacing: .02em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px color-mix(in srgb, var(--rute-farge) 40%, transparent);
+}
+
+.oppgave-svar{
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 27px;
+  min-height: 36px;
+  color: var(--rute-farge);
+  font-variant-numeric: tabular-nums;
+  border-bottom: 2px solid var(--edge);
+  padding-bottom: 6px;
+  margin: 8px 4px 10px;
+}
+
+.oppgave-melding{
+  min-height: 19px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.oppgave-melding.feil{ color: #ff8d7a; }
+.oppgave-melding.riktig{ color: var(--green); }
+
+.tastatur{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.tast{
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 20px;
+  padding: 15px 0;
+  border-radius: 13px;
+  border: 1px solid var(--edge);
+  background: rgba(255,255,255,.035);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .12s ease, transform .1s ease;
+}
+.tast:hover{ background: rgba(255,255,255,.07); }
+.tast:active{ transform: scale(.95); }
+.tast-slett{ color: var(--muted); }
+.tast-ok{
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  color: #04211d;
+  border: none;
+  font-size: 22px;
+}
+
+.oppgave-avbryt{
+  margin-top: 12px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+.oppgave-avbryt:hover{ color: var(--ink); }
 
 .win-overlay{
   position: fixed; inset: 0;

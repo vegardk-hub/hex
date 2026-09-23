@@ -25,11 +25,12 @@
     <div class="brand">
       <span class="brand-mark">⬡</span>
       <div>
-        <h1>HEX <span class="version" id="version">v10</span></h1>
-        <span class="sub">Fase 1 - testmodus: klikk avdekker direkte (matte kommer i fase 2)</span>
+        <h1>HEX <span class="version" id="version">v11</span></h1>
+        <span class="sub">Løs regnestykket, og ruta lyser opp gjennom tåken</span>
       </div>
     </div>
     <div class="controls">
+      <div class="chip-group" id="nivaVelger" role="group" aria-label="Alderstrinn"></div>
       <select id="sizeSelect" aria-label="Brettstørrelse">
         <option value="sma">Lite brett</option>
         <option value="med" selected>Middels brett</option>
@@ -41,11 +42,22 @@
 
   <div class="progress-row">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    <span class="progress-label" id="progressLabel">1 / 37 ruter avdekket</span>
+    <span class="progress-label" id="progressLabel">0 / 37 ruter avdekket</span>
   </div>
 
   <div class="board-wrap">
     <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+
+<div class="oppgave-bakgrunn" id="oppgave" hidden>
+  <div class="oppgave-kort" id="oppgaveKort">
+    <span class="oppgave-merke" id="oppgaveMerke">+</span>
+    <div class="oppgave-stykke" id="oppgaveStykke">7 + 5</div>
+    <div class="oppgave-svar" id="oppgaveSvar"></div>
+    <p class="oppgave-melding" id="oppgaveMelding"></p>
+    <div class="tastatur" id="tastatur"></div>
+    <button class="oppgave-avbryt" id="oppgaveAvbryt">Lukk</button>
   </div>
 </div>
 
@@ -57,6 +69,7 @@
   </div>
 </div>
 
+<script src="matte.js"></script>
 <script src="hexgrid.js"></script>
 <script src="app.js"></script>
 </body>

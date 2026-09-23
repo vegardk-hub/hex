@@ -1,8 +1,8 @@
 // Bump CACHE og VERSJON i app.js sammen ved hver endring.
 // Nettverk-først: du ser alltid siste versjon når du er på nett, og cachen
 // er bare en reserve når du er offline.
-const CACHE = 'hex-v10';
-const FILER = ['./', 'index.html', 'styles.css', 'hexgrid.js', 'app.js', 'manifest.webmanifest',
+const CACHE = 'hex-v11';
+const FILER = ['./', 'index.html', 'styles.css', 'matte.js', 'hexgrid.js', 'app.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
