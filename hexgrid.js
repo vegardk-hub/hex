@@ -117,6 +117,7 @@ class HexBoard {
 
     const holes = defs.querySelector('#hexFogHoles');
     const faceGroup = hexEl('g');
+    const neonGroup = hexEl('g');
     const gridGroup = hexEl('g');
     const haloGroup = hexEl('g');
     const hexGroup = hexEl('g');
@@ -135,6 +136,23 @@ class HexBoard {
       });
       faceGroup.appendChild(face);
 
+      // Neonfargen vandrer på tvers av brettet, så de løste rutene til
+      // sammen bygger opp én sammenhengende fargeflate i stedet for å
+      // være like. Innenfor hver rute forskyves fargetonen gjennom
+      // gradienten - det er det som gir den sjatterte dybden.
+      const sweep = ((p.x - minX) / w) * 0.62 + ((p.y - minY) / h) * 0.38;
+      const hue = 248 + sweep * 96 + (Math.random() * 9 - 4.5);
+      this._buildNeonGradients(defs, k, hue);
+
+      const neon = hexEl('polygon', {
+        class: 'hex-neon' + (isStart ? ' lit settled' : ''),
+        points: this.pointsAttr(inner),
+        fill: 'url(#hexFill-' + k.replace(',', '_') + ')'
+      });
+      neon.style.setProperty('--breathe', (9 + Math.random() * 6).toFixed(1) + 's');
+      neon.style.setProperty('--breathe-delay', (Math.random() * 5).toFixed(1) + 's');
+      neonGroup.appendChild(neon);
+
       // Rutenettet ligger UNDER tåken og tones ned med avstanden fra det
       // utforskede - man aner naborutene, ikke hele brettet.
       const gridLine = hexEl('polygon', { class: 'hex-grid-line', points: this.pointsAttr(inner) });
@@ -144,16 +162,19 @@ class HexBoard {
       const hole = hexEl('polygon', { class: 'fogmask-tile', points: this.pointsAttr(holeShape) });
       holes.appendChild(hole);
 
-      // Lysglorien ligger OVER tåken, så lyset ser ut til å fanges i den.
+      // Lysglorien ligger OVER tåken, i rutas egen neonfarge, så lyset fra
+      // en løst rute ser ut til å fanges i tåken rundt den.
       const halo = hexEl('polygon', {
         class: 'hex-halo' + (isStart ? ' lit' : ''),
-        points: this.pointsAttr(this.insetCorners(outer, p.x, p.y, 1.55)),
-        fill: 'url(#hexHalo)'
+        points: this.pointsAttr(this.insetCorners(outer, p.x, p.y, 1.9)),
+        fill: 'url(#hexHalo-' + k.replace(',', '_') + ')'
       });
       haloGroup.appendChild(halo);
 
       const g = hexEl('g', { class: 'hex' + (isStart ? ' revealed' : ' locked') });
       g.dataset.q = p.q; g.dataset.r = p.r;
+      g.style.setProperty('--neon-edge', 'hsl(' + hue.toFixed(1) + ', 100%, 74%)');
+      g.style.setProperty('--neon-glow', 'hsla(' + hue.toFixed(1) + ', 100%, 62%, .75)');
       g.appendChild(hexEl('polygon', { class: 'hex-hit', points: this.pointsAttr(outer) }));
       g.appendChild(hexEl('polygon', { class: 'hex-outline', points: this.pointsAttr(inner), pathLength: '100' }));
       hexGroup.appendChild(g);
@@ -162,11 +183,12 @@ class HexBoard {
 
       this.cells.set(k, {
         q: p.q, r: p.r, revealed: isStart,
-        el: g, face: face, mask: hole, grid: gridLine, halo: halo
+        el: g, face: face, neon: neon, mask: hole, grid: gridLine, halo: halo
       });
     });
 
     this.svg.appendChild(faceGroup);
+    this.svg.appendChild(neonGroup);
     this.svg.appendChild(gridGroup);
     this.svg.appendChild(this._buildFogField(minX, minY, w, h));
     this.svg.appendChild(haloGroup);
@@ -220,13 +242,6 @@ class HexBoard {
       blur: 0.4
     }));
 
-    // Lys som fanges i tåken rundt en åpnet rute.
-    const halo = hexEl('radialGradient', { id: 'hexHalo', cx: '50%', cy: '50%', r: '50%' });
-    halo.appendChild(hexEl('stop', { offset: '0%', 'stop-color': '#a8c6e8', 'stop-opacity': '.20' }));
-    halo.appendChild(hexEl('stop', { offset: '55%', 'stop-color': '#8fb4dd', 'stop-opacity': '.07' }));
-    halo.appendChild(hexEl('stop', { offset: '100%', 'stop-color': '#8fb4dd', 'stop-opacity': '0' }));
-    defs.appendChild(halo);
-
     // Vignett: mørkere ut mot kantene, så tåken får dybde i stedet for å
     // ligge som et jevnt teppe.
     const vign = hexEl('radialGradient', { id: 'hexVignette', cx: '50%', cy: '48%', r: '62%' });
@@ -263,6 +278,38 @@ class HexBoard {
     maskInner.appendChild(hexEl('g', { id: 'hexFogHoles' }));
     mask.appendChild(maskInner);
     defs.appendChild(mask);
+  }
+
+  // Én sjattert neonfylling og én lysglorie per rute. Fargetonen dreies
+  // gjennom gradientstoppene (ikke bare lysheten), som er det som gir
+  // flere nyanser i samme rute i stedet for en flat tone.
+  _buildNeonGradients(defs, k, hue){
+    const id = k.replace(',', '_');
+    const hsl = (h, s, l, a) => 'hsl' + (a === undefined ? '' : 'a') +
+      '(' + ((h % 360) + 360) % 360 + ', ' + s + '%, ' + l + '%' + (a === undefined ? '' : ', ' + a) + ')';
+
+    // Lyspunktet flyttes litt tilfeldig per rute, ellers ser alle rutene
+    // ut som identiske stempler.
+    const cx = (30 + Math.random() * 16).toFixed(0);
+    const cy = (22 + Math.random() * 16).toFixed(0);
+
+    const fill = hexEl('radialGradient', { id: 'hexFill-' + id, cx: cx + '%', cy: cy + '%', r: '88%' });
+    [
+      ['0%',   hsl(hue + 16, 96, 76)],
+      ['24%',  hsl(hue + 5, 95, 60)],
+      ['54%',  hsl(hue - 9, 90, 41)],
+      ['80%',  hsl(hue - 20, 85, 25)],
+      ['100%', hsl(hue - 30, 78, 14)]
+    ].forEach(([offset, color]) => {
+      fill.appendChild(hexEl('stop', { offset: offset, 'stop-color': color }));
+    });
+    defs.appendChild(fill);
+
+    const halo = hexEl('radialGradient', { id: 'hexHalo-' + id, cx: '50%', cy: '50%', r: '50%' });
+    halo.appendChild(hexEl('stop', { offset: '0%', 'stop-color': hsl(hue, 100, 68), 'stop-opacity': '.42' }));
+    halo.appendChild(hexEl('stop', { offset: '42%', 'stop-color': hsl(hue + 8, 96, 60), 'stop-opacity': '.16' }));
+    halo.appendChild(hexEl('stop', { offset: '100%', 'stop-color': hsl(hue + 14, 92, 55), 'stop-opacity': '0' }));
+    defs.appendChild(halo);
   }
 
   // color-interpolation-filters=sRGB er viktig: standarden (linearRGB) gjør
@@ -384,6 +431,9 @@ class HexBoard {
     cell.el.classList.add('revealed');
     cell.face.classList.add('open');
     cell.halo.classList.add('lit');
+
+    cell.neon.classList.add('lit');
+    cell.neon.addEventListener('animationend', () => cell.neon.classList.add('settled'), { once: true });
 
     cell.mask.classList.remove('revealing');
     void cell.mask.getBoundingClientRect();

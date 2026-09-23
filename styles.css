@@ -197,17 +197,45 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   to{ stroke-dashoffset: -100; }
 }
 
-/* Avdekket (allerede trykket på): rolig og ferdig - tynn, flat, matt
-   kant, ingen glød og ingen animasjon. Skal tydelig IKKE se klikkbar ut. */
+/* Avdekket (allerede trykket på): kanten tar rutas egen neonfarge, men
+   står stille - den skal tydelig IKKE se klikkbar ut. */
 .hex.revealed .hex-outline{
-  stroke: rgba(234,247,244,.4);
-  stroke-width: 1.1;
-  stroke-opacity: .55;
+  stroke: var(--neon-edge, rgba(234,247,244,.5));
+  stroke-width: 1.5;
+  stroke-opacity: .85;
+  filter: drop-shadow(0 0 5px var(--neon-glow, transparent));
 }
 
 /* Selve ruteflaten under tåken. */
 .hex-face{ fill: #080b11; }
 .hex-face.open{ fill: url(#hexFaceOpen); transition: fill .6s ease; }
+
+/* Neonfyllet på løste ruter. Gradienten (bygget per rute i JS) dreier
+   både farge og lyshet gjennom ruta, så flaten får dybde og flere
+   nyanser i stedet for en flat tone. */
+.hex-neon{
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+}
+.hex-neon.lit{
+  opacity: 1;
+  animation: hexNeonIgnite 1.15s ease-out;
+}
+.hex-neon.settled{
+  animation: hexNeonBreathe var(--breathe, 12s) ease-in-out infinite;
+  animation-delay: var(--breathe-delay, 0s);
+}
+@keyframes hexNeonIgnite{
+  0%{ opacity: 0; filter: brightness(2.4) saturate(1.5); transform: scale(.84); }
+  38%{ opacity: 1; filter: brightness(1.75) saturate(1.3); transform: scale(1.07); }
+  100%{ opacity: 1; filter: brightness(1) saturate(1); transform: scale(1); }
+}
+@keyframes hexNeonBreathe{
+  0%, 100%{ opacity: .88; filter: brightness(.94); }
+  50%{ opacity: 1; filter: brightness(1.1); }
+}
 
 /* Tåkefeltet: ett sammenhengende lag over hele brettet, ikke én lapp per
    rute. To skydrev i ulik skala og fart gir dybde, og masken er uskarp,
