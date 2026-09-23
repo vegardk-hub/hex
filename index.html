@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>HEX</title>
+<meta name="description" content="Løs regnestykker og avdekk en hexagonal stjernehimmel gjennom tåken.">
+<meta name="theme-color" content="#05090a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HEX">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">⬡</span>
+      <div>
+        <h1>HEX</h1>
+        <span class="sub">Fase 1 - testmodus: klikk avdekker direkte (matte kommer i fase 2)</span>
+      </div>
+    </div>
+    <div class="controls">
+      <select id="sizeSelect" aria-label="Brettstørrelse">
+        <option value="sma">Lite brett</option>
+        <option value="med" selected>Middels brett</option>
+        <option value="sto">Stort brett</option>
+      </select>
+      <button id="newBoardBtn" class="btn-ghost">Nytt brett</button>
+    </div>
+  </header>
+
+  <div class="progress-row">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-label" id="progressLabel">1 / 37 ruter avdekket</span>
+  </div>
+
+  <div class="board-wrap">
+    <svg id="board" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+</div>
+
+<div class="win-overlay" id="winOverlay" hidden>
+  <div class="win-card">
+    <h2>Himmelen er avdekket!</h2>
+    <p>Alle rutene er avdekket. Hele stjernehimmelen kommer til syne.</p>
+    <button id="winNewBoard" class="btn-primary">Spill igjen</button>
+  </div>
+</div>
+
+<script src="hexgrid.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
