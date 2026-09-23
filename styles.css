@@ -187,7 +187,7 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   filter: drop-shadow(0 0 3px rgba(79,240,228,.35));
   animation:
     hexPulseGlow 5.2s ease-in-out infinite,
-    hexDashMarch 6s linear infinite;
+    hexDashMarch 12s linear infinite;
 }
 @keyframes hexPulseGlow{
   0%, 100%{ stroke-opacity: .68; stroke-width: 1.9; }
