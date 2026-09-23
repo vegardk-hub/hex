@@ -171,13 +171,6 @@ class HexBoard {
 
       g.appendChild(outline);
 
-      if (!isStart){
-        const hint = hexEl('g', { class: 'hex-hint' });
-        hint.appendChild(hexEl('circle', { class: 'hex-ping', cx: p.x, cy: p.y, r: this.size * 0.24 }));
-        hint.appendChild(hexEl('circle', { class: 'hex-dot', cx: p.x, cy: p.y, r: this.size * 0.08 }));
-        g.appendChild(hint);
-      }
-
       hexGroup.appendChild(g);
 
       g.addEventListener('click', () => this._onHexClick(k, g));

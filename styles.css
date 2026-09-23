@@ -161,7 +161,7 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   stroke-dasharray: 7 5;
   stroke-linecap: round;
   animation:
-    hexPulseGlow 1.3s linear infinite,
+    hexPulseGlow 5.2s linear infinite,
     hexDashMarch 6s linear infinite;
 }
 @keyframes hexPulseGlow{
@@ -220,37 +220,6 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   0%{ opacity: 1; }
   55%{ opacity: .35; }
   100%{ opacity: 0; }
-}
-
-/* Trykk-her-markør: en rolig radar-ping + fast prikk, kun på ruter som
-   faktisk kan avdekkes nå. Låste ruter viser ingenting her. */
-.hex-hint{ pointer-events: none; }
-.hex-dot{
-  fill: url(#hexEdgeGrad);
-  opacity: 0;
-  transition: opacity .25s ease;
-}
-.hex.reachable .hex-dot{
-  opacity: .95;
-  filter: drop-shadow(0 0 5px rgba(79,240,228,.85));
-}
-.hex-ping{
-  fill: none;
-  stroke: url(#hexEdgeGrad);
-  stroke-width: 2;
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation-play-state: paused;
-}
-.hex.reachable .hex-ping{
-  animation: hexPing 2.6s ease-out infinite;
-  animation-play-state: running;
-}
-@keyframes hexPing{
-  0%{ transform: scale(.45); opacity: .9; }
-  75%{ transform: scale(1.9); opacity: 0; }
-  100%{ transform: scale(1.9); opacity: 0; }
 }
 
 .hex.shake{ animation: hexShakeX .4s ease; }
