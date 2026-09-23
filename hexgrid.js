@@ -126,6 +126,16 @@ class HexBoard {
       defs.appendChild(clip);
       tileMask.appendChild(hexEl('polygon', { points: this.pointsAttr(inner) }));
 
+      // Tåken får sin egen, litt STØRRE kontur enn selve ruten (bleed ut over
+      // fugen og et lite stykke inn på nabokantene) - det er det som gir
+      // følelsen av at tåken flyter som et eget lag over rutene, ikke ligger
+      // flush inni dem.
+      const fogShape = this.insetCorners(outer, p.x, p.y, 1.06);
+      const fogClipId = 'fogclip-' + k.replace(',', '_');
+      const fogClip = hexEl('clipPath', { id: fogClipId });
+      fogClip.appendChild(hexEl('polygon', { points: this.pointsAttr(fogShape) }));
+      defs.appendChild(fogClip);
+
       const g = hexEl('g', { class: 'hex' + (isStart ? ' revealed' : ' locked') });
       g.dataset.q = p.q; g.dataset.r = p.r;
 
@@ -135,22 +145,39 @@ class HexBoard {
 
       if (!isStart){
         const fogWrap = hexEl('g', { class: 'fog-layer' });
-        const fogBase = hexEl('polygon', { class: 'fog-base', points: this.pointsAttr(inner) });
+        const fogBase = hexEl('polygon', {
+          class: 'fog-base', points: this.pointsAttr(fogShape),
+          'clip-path': 'url(#' + fogClipId + ')'
+        });
+        const fogHighlight = hexEl('ellipse', {
+          class: 'fog-highlight',
+          cx: p.x, cy: p.y - this.size * 0.32, rx: this.size * 0.62, ry: this.size * 0.26,
+          'clip-path': 'url(#' + fogClipId + ')'
+        });
         const fogTexture = hexEl('rect', {
           class: 'fog-texture',
           x: p.x - this.size * 1.3, y: p.y - this.size * 1.3,
           width: this.size * 2.6, height: this.size * 2.6,
           filter: 'url(#hexFogTurb)',
-          'clip-path': 'url(#' + clipId + ')'
+          'clip-path': 'url(#' + fogClipId + ')'
         });
         fogTexture.style.setProperty('--fog-dur', (6 + rnd() * 4).toFixed(2) + 's');
         fogTexture.style.setProperty('--fog-delay', (rnd() * 4).toFixed(2) + 's');
         fogWrap.appendChild(fogBase);
+        fogWrap.appendChild(fogHighlight);
         fogWrap.appendChild(fogTexture);
         g.appendChild(fogWrap);
       }
 
       g.appendChild(outline);
+
+      if (!isStart){
+        const hint = hexEl('g', { class: 'hex-hint' });
+        hint.appendChild(hexEl('circle', { class: 'hex-ping', cx: p.x, cy: p.y, r: this.size * 0.24 }));
+        hint.appendChild(hexEl('circle', { class: 'hex-dot', cx: p.x, cy: p.y, r: this.size * 0.08 }));
+        g.appendChild(hint);
+      }
+
       hexGroup.appendChild(g);
 
       g.addEventListener('click', () => this._onHexClick(k, g));
@@ -171,9 +198,15 @@ class HexBoard {
     defs.appendChild(edgeGrad);
 
     const turb = hexEl('filter', { id: 'hexFogTurb', x: '-40%', y: '-40%', width: '180%', height: '180%' });
-    turb.appendChild(hexEl('feTurbulence', { type: 'fractalNoise', baseFrequency: '0.014 0.022', numOctaves: '2', seed: String(1 + Math.floor(Math.random() * 90)), result: 'n' }));
-    turb.appendChild(hexEl('feColorMatrix', { in: 'n', type: 'matrix', values: '0 0 0 0 0.05  0 0 0 0 0.35  0 0 0 0 0.32  0 0 0 0.6 0.25' }));
+    turb.appendChild(hexEl('feTurbulence', { type: 'fractalNoise', baseFrequency: '0.010 0.017', numOctaves: '3', seed: String(1 + Math.floor(Math.random() * 90)), result: 'n' }));
+    turb.appendChild(hexEl('feColorMatrix', { in: 'n', type: 'matrix', values: '0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0 0.20  0 0 0 0.55 0.2', result: 'nc' }));
+    turb.appendChild(hexEl('feGaussianBlur', { in: 'nc', stdDeviation: '1.6' }));
     defs.appendChild(turb);
+
+    const fogHi = hexEl('radialGradient', { id: 'hexFogHi', cx: '50%', cy: '20%', r: '75%' });
+    fogHi.appendChild(hexEl('stop', { offset: '0%', 'stop-color': '#aab6e8', 'stop-opacity': '.22' }));
+    fogHi.appendChild(hexEl('stop', { offset: '100%', 'stop-color': '#aab6e8', 'stop-opacity': '0' }));
+    defs.appendChild(fogHi);
 
     defs.appendChild(hexEl('clipPath', { id: 'hexTileMask' }));
 
