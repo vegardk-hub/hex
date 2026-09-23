@@ -6,7 +6,7 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 14;
+const VERSJON = 15;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 const NIVA_LAGER = 'hex-niva';
@@ -33,7 +33,6 @@ const oppgaveAvbryt = document.getElementById('oppgaveAvbryt');
 const tastatur = document.getElementById('tastatur');
 const brettTeller = document.getElementById('brettTeller');
 const winStatus = document.getElementById('winStatus');
-const winNiva = document.getElementById('winNiva');
 
 let niva = '6-8';
 let aktivOppgave = null;   // { rute, fasit, tekst }
@@ -85,19 +84,7 @@ function oppdaterBrettTeller(){
     return;
   }
   brettTeller.hidden = false;
-  brettTeller.textContent = brettLost + ' brett løst · nivå ' +
-    (trinn() + 1) + '/' + (Matte.MAKS_TRINN + 1);
-}
-
-// Beskrivelsene på alderstrinn-knappene endrer seg med vanskelighetstrinnet,
-// så en voksen kan se hva barnet faktisk får av oppgaver.
-function oppdaterNivaTekster(){
-  const beskrivelser = {};
-  Matte.nivaListe(trinn()).forEach(n => { beskrivelser[n.id] = n.beskrivelse; });
-  nivaVelger.querySelectorAll('.chip').forEach(knapp => {
-    const id = knapp.dataset.niva;
-    if (beskrivelser[id]) knapp.title = beskrivelser[id];
-  });
+  brettTeller.textContent = brettLost + ' brett løst';
 }
 
 function byggNivaVelger(){
@@ -241,12 +228,7 @@ function sjekkSvar(){
 
 board.onReachable = fordelOppgaver;
 
-board.onRequestReveal = nokkel => {
-  const rute = board.cells.get(nokkel);
-  // Ikon-ruter er gratis: de åpner seg uten regnestykke.
-  if (rute && rute.ikon){ board.reveal(nokkel); return; }
-  apneOppgave(nokkel);
-};
+board.onRequestReveal = apneOppgave;
 
 board.onProgress = (avdekket, totalt) => {
   progressFill.style.width = (avdekket / totalt * 100).toFixed(1) + '%';
@@ -254,21 +236,15 @@ board.onProgress = (avdekket, totalt) => {
 };
 
 board.onComplete = () => {
-  const trinnFor = trinn();
+  // Vanskelighetstrinnet justeres i bakgrunnen - spilleren ser bare at
+  // brettene teller opp, ikke hvilket nivå de er på.
   brettLost++;
   lagreBrettLost();
-  const trinnEtter = trinn();
-
   oppdaterBrettTeller();
-  oppdaterNivaTekster();
 
   winStatus.textContent = brettLost === 1
     ? 'Ditt første brett er ferdig!'
     : 'Du har løst ' + brettLost + ' brett.';
-
-  winNiva.textContent = trinnEtter > trinnFor
-    ? 'Regnestykkene blir litt vanskeligere nå.'
-    : '';
 
   setTimeout(() => { winOverlay.hidden = false; }, 700);
 };

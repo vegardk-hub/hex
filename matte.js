@@ -27,9 +27,7 @@ const MATTE_NIVAER = {
     navn: '4–5 år',
     tak: [10, 12, 14, 15],
     minusAndel: [0.40, 0.45, 0.50, 0.55],
-    beskriv(trinn){
-      return 'Enkle pluss og minus opp til ' + trinnverdi(this.tak, trinn);
-    },
+    beskriv(){ return 'Enkle pluss og minus'; },
     lag(trinn){
       const tak = trinnverdi(this.tak, trinn);
       // Små tall, og aldri svaret 0 - det forvirrer de yngste mer enn det
@@ -48,9 +46,7 @@ const MATTE_NIVAER = {
     navn: '6–8 år',
     tak: [20, 30, 40, 50],
     minusAndel: [0.45, 0.48, 0.50, 0.52],
-    beskriv(trinn){
-      return 'Pluss og minus opp til ' + trinnverdi(this.tak, trinn);
-    },
+    beskriv(){ return 'Pluss og minus'; },
     lag(trinn){
       const tak = trinnverdi(this.tak, trinn);
       // Pluss bygges fra svaret og ned, slik at summen aldri sprekker taket.
@@ -69,10 +65,7 @@ const MATTE_NIVAER = {
     tak: [100, 120, 150, 200],
     gangeTak: [10, 10, 11, 12],
     gangeAndel: [0.38, 0.42, 0.45, 0.48],
-    beskriv(trinn){
-      return 'Pluss og minus opp til ' + trinnverdi(this.tak, trinn) +
-        ', gangetabellen til ' + trinnverdi(this.gangeTak, trinn);
-    },
+    beskriv(){ return 'Pluss, minus og gangetabellen'; },
     lag(trinn){
       const tak = trinnverdi(this.tak, trinn);
       const gangeAndel = trinnverdi(this.gangeAndel, trinn);

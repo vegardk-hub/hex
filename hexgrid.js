@@ -26,6 +26,9 @@ const GRID_BY_DIST = [0, 0.46, 0.24, 0.09];
 // blanding uansett flaks.
 const IKON_ANDEL = 0.5;
 
+// Hvor mange nye ruter som dukker opp for hvert løste regnestykke.
+const NYE_PER_LOST = 2;
+
 // Enkle ikoner tegnet i et 24x24-rutenett, alle uten egen fill slik at
 // de arver farge fra CSS. Holdes bevisst enkle - de skal leses på en
 // liten flate.
@@ -82,6 +85,11 @@ class HexBoard {
     this.total = 0;
     this.revealedCount = 0;
 
+    // Ruter som har dukket opp og kan trykkes på. Settet vokser kontrollert -
+    // to nye ruter for hvert løste regnestykke - i stedet for at alle naboer
+    // åpner seg på én gang.
+    this.apne = new Set();
+
     // Kroker for spillet rundt motoren:
     this.onProgress = null;       // (revealedCount, total)
     this.onComplete = null;       // ()
@@ -126,6 +134,7 @@ class HexBoard {
     this.svg.innerHTML = '';
     this.cells = new Map();
     this.revealedCount = 0;
+    this.apne = new Set();
 
     const coords = cellsInRadius(radius);
     this.total = coords.length;
@@ -269,7 +278,8 @@ class HexBoard {
     this.svg.appendChild(hexGroup);
 
     this.revealedCount = 0;
-    this._updateReachable();
+    this.apne.add(start);
+    this._oppdaterTilstand();
     this._emitProgress();
   }
 
@@ -491,36 +501,84 @@ class HexBoard {
     }
 
     this.cells.forEach((cell, k) => {
-      // Ingenting er løst ennå: bare startruta har en åpning i tåken.
-      const d = this.revealedCount === 0
-        ? (cell.isStart ? 1 : 99)
-        : (dist.has(k) ? dist.get(k) : 99);
+      // Åpne ruter har alltid en lysning i tåken, også helt i starten når
+      // ingenting er avdekket ennå.
+      const d = this.apne.has(k) ? 1 : (dist.has(k) ? dist.get(k) : 99);
       cell.mask.style.fillOpacity = d < HOLE_BY_DIST.length ? HOLE_BY_DIST[d] : 0;
       cell.grid.style.strokeOpacity = d < GRID_BY_DIST.length ? GRID_BY_DIST[d] : 0;
     });
   }
 
-  _updateReachable(){
-    const apne = [];
+  _oppdaterTilstand(){
     this.cells.forEach((cell, k) => {
       if (cell.revealed) return;
-      // Før første rute er løst er startruta den eneste åpne. Ringene rundt
-      // naborutene dukker altså først opp når den første oppgaven er løst.
-      const reach = this.revealedCount === 0
-        ? !!cell.isStart
-        : this.neighbors(cell.q, cell.r).some(([nq, nr]) => this.isRevealed(hexKey(nq, nr)));
-      cell.el.classList.toggle('reachable', reach);
-      cell.el.classList.toggle('locked', !reach);
-
-      // Regnestykket/ikonet vises bare på ruter som faktisk er åpne, slik
-      // at barnet kan velge mellom dem som lyser.
-      if (cell.ikonEl) cell.ikonEl.classList.toggle('synlig', reach);
-      else cell.merke.classList.toggle('synlig', reach && cell.merke.textContent !== '');
-
-      if (reach) apne.push(k);
+      const apen = this.apne.has(k);
+      cell.el.classList.toggle('reachable', apen);
+      cell.el.classList.toggle('locked', !apen);
+      cell.merke.classList.toggle('synlig', apen && cell.merke.textContent !== '');
     });
     this._updateFogDensity();
-    if (this.onReachable) this.onReachable(apne);
+    if (this.onReachable) this.onReachable([...this.apne]);
+  }
+
+  // Ruter som grenser til det avdekkede, men ennå ikke har dukket opp.
+  _frontlinje(){
+    const kandidater = [];
+    this.cells.forEach((cell, k) => {
+      if (cell.revealed || this.apne.has(k)) return;
+      const grenser = this.neighbors(cell.q, cell.r)
+        .some(([nq, nr]) => this.isRevealed(hexKey(nq, nr)));
+      if (grenser) kandidater.push(k);
+    });
+    return kandidater;
+  }
+
+  _velgFraFrontlinje(tillatIkon, foretrekkRegnestykke){
+    let kandidater = this._frontlinje();
+    if (!tillatIkon) kandidater = kandidater.filter(k => !this.cells.get(k).ikon);
+    if (foretrekkRegnestykke){
+      const utenIkon = kandidater.filter(k => !this.cells.get(k).ikon);
+      if (utenIkon.length) kandidater = utenIkon;
+    }
+    if (!kandidater.length) return null;
+    return kandidater[Math.floor(Math.random() * kandidater.length)];
+  }
+
+  // Åpner nye ruter etter et løst regnestykke. Første rute er helst et
+  // regnestykke, og det slipper aldri gjennom to ikoner samtidig: da ville
+  // spilleren kunne stå igjen uten noe å regne ut.
+  _apneNye(antall){
+    let ikonTatt = false;
+    for (let i = 0; i < antall; i++){
+      const nokkel = this._velgFraFrontlinje(!ikonTatt, i === 0);
+      if (!nokkel) return;
+      const cell = this.cells.get(nokkel);
+      if (cell.ikon){
+        ikonTatt = true;
+        this._avdekkVisuelt(cell);   // ikoner er gratis og åpner seg selv
+        this.revealedCount++;
+      } else {
+        this.apne.add(nokkel);
+      }
+    }
+  }
+
+  // Sikkerhetsnett: står spilleren uten noen rute å trykke på mens det
+  // fortsatt finnes skjulte ruter, åpnes flere til det finnes et
+  // regnestykke igjen (eller brettet er tomt).
+  _sikreFremdrift(){
+    let vakt = 0;
+    while (this.apne.size === 0 && this.revealedCount < this.total && vakt++ <= this.total){
+      const nokkel = this._velgFraFrontlinje(true, true);
+      if (!nokkel) break;
+      const cell = this.cells.get(nokkel);
+      if (cell.ikon){
+        this._avdekkVisuelt(cell);
+        this.revealedCount++;
+      } else {
+        this.apne.add(nokkel);
+      }
+    }
   }
 
   // Spillet setter teksten - motoren vet ingenting om hva som står i den.
@@ -569,9 +627,22 @@ class HexBoard {
 
   reveal(k){
     const cell = this.cells.get(k);
-    if (!cell || cell.revealed) return;
-    cell.revealed = true;
+    // Ikoner trykkes ikke på - de åpner seg selv når de dukker opp.
+    if (!cell || cell.revealed || cell.ikon) return;
+
+    this._avdekkVisuelt(cell);
     this.revealedCount++;
+    this.apne.delete(k);
+
+    this._apneNye(NYE_PER_LOST);
+    this._sikreFremdrift();
+    this._oppdaterTilstand();
+    this._emitProgress();
+  }
+
+  _avdekkVisuelt(cell){
+    if (cell.revealed) return;
+    cell.revealed = true;
     cell.el.classList.remove('locked', 'reachable');
     cell.el.classList.add('revealed');
     cell.face.classList.add('open');
@@ -599,9 +670,6 @@ class HexBoard {
     void cell.mask.getBoundingClientRect();
     cell.mask.classList.add('revealing');
     cell.mask.addEventListener('animationend', () => cell.mask.classList.remove('revealing'), { once: true });
-
-    this._updateReachable();
-    this._emitProgress();
   }
 }
 
