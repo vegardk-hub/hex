@@ -95,6 +95,7 @@ class HexBoard {
     this.onComplete = null;       // ()
     this.onRequestReveal = null;  // (key) - sett denne for å be om godkjenning (f.eks. et regnestykke) før reveal(key)
     this.onReachable = null;      // (nøkler[]) - rutene som nå er åpne, så spillet kan gi dem hvert sitt stykke
+    this.onIkon = null;           // (key) - en ikon-rute åpnet seg selv
   }
 
   axialToPixel(q, r){
@@ -557,6 +558,7 @@ class HexBoard {
         ikonTatt = true;
         this._avdekkVisuelt(cell);   // ikoner er gratis og åpner seg selv
         this.revealedCount++;
+        if (this.onIkon) this.onIkon(nokkel);
       } else {
         this.apne.add(nokkel);
       }
@@ -575,6 +577,7 @@ class HexBoard {
       if (cell.ikon){
         this._avdekkVisuelt(cell);
         this.revealedCount++;
+        if (this.onIkon) this.onIkon(nokkel);
       } else {
         this.apne.add(nokkel);
       }

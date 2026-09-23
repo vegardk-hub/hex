@@ -7,7 +7,9 @@
 // Partiklene tegnes på et canvas, ikke som SVG-elementer. Et fullt brett gir
 // rundt tusen fragmenter, og like mange SVG-noder ville hakket på nettbrett.
 
-const FINALE_PARTIKLER_PER_RUTE = 17;
+// Flere og mindre biter gir en finere oppløsning. Et stort brett gir da
+// rundt 1800 partikler - greit på canvas, der de fleste bare er fillRect.
+const FINALE_PARTIKLER_PER_RUTE = 30;
 const FINALE_TICK = 45;          // ms mellom hver pulje ruter som sprenges
 const FINALE_PULJER = 22;        // brettet brytes ned på omtrent like lang tid uansett størrelse
 const FINALE_TYNGDE = 210;       // px/s^2
@@ -151,8 +153,8 @@ class FinaleSekvens {
       const rx = dx * Math.cos(vri) - dy * Math.sin(vri);
       const ry = dx * Math.sin(vri) + dy * Math.cos(vri);
 
-      const fart = 170 + Math.random() * 430;
-      const erPiksel = Math.random() < 0.58;
+      const fart = 160 + Math.random() * 470;
+      const erPiksel = Math.random() < 0.68;
       const lyshet = 34 + Math.random() * 46;
 
       this.partikler.push({
@@ -160,7 +162,7 @@ class FinaleSekvens {
         vx: rx * fart, vy: ry * fart - Math.random() * 60,
         rot: Math.random() * Math.PI * 2,
         spinn: (Math.random() - 0.5) * 9,
-        str: erPiksel ? 2 + Math.random() * 3.5 : 4 + Math.random() * 9,
+        str: erPiksel ? 1.2 + Math.random() * 2.3 : 2.4 + Math.random() * 5.2,
         piksel: erPiksel,
         farge: 'hsl(' + (hue + (Math.random() * 26 - 13)).toFixed(0) + ', ' +
                (80 + Math.random() * 20).toFixed(0) + '%, ' + lyshet.toFixed(0) + '%)',

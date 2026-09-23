@@ -25,7 +25,7 @@
     <div class="brand">
       <span class="brand-mark">⬡</span>
       <div>
-        <h1>HEX <span class="version" id="version">v16</span></h1>
+        <h1>HEX <span class="version" id="version">v17</span></h1>
         <span class="sub">Løs regnestykket, og ruta lyser opp gjennom tåken</span>
       </div>
     </div>
@@ -37,6 +37,9 @@
         <option value="sto">Stort brett</option>
       </select>
       <button id="newBoardBtn" class="btn-ghost">Nytt brett</button>
+      <button id="statKnapp" class="btn-ghost btn-stat" aria-label="Vis statistikk" title="Statistikk">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="9" width="3.4" height="6" rx="1.2"/><rect x="6.3" y="5" width="3.4" height="10" rx="1.2"/><rect x="11.6" y="1.5" width="3.4" height="13.5" rx="1.2"/></svg>
+      </button>
     </div>
   </header>
 
@@ -62,6 +65,17 @@
   </div>
 </div>
 
+<div class="stat-bakgrunn" id="statistikk" hidden>
+  <div class="stat-kort" role="dialog" aria-label="Statistikk">
+    <div class="stat-topp">
+      <h2>Statistikk</h2>
+      <button class="stat-lukk" id="statLukk" aria-label="Lukk">✕</button>
+    </div>
+    <div id="statInnhold"></div>
+  </div>
+</div>
+
+<script src="statistikk.js"></script>
 <script src="matte.js"></script>
 <script src="hexgrid.js"></script>
 <script src="finale.js"></script>
