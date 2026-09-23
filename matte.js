@@ -12,6 +12,21 @@ function mtall(min, max){
 }
 
 const MATTE_NIVAER = {
+  '4-5': {
+    navn: '4–5 år',
+    beskrivelse: 'Enkle pluss og minus opp til 10',
+    lag(){
+      // Små tall, og aldri svaret 0 - det forvirrer de yngste mer enn det
+      // lærer bort.
+      if (Math.random() < 0.6){
+        const sum = mtall(2, 10);
+        const a = mtall(1, sum - 1);
+        return { a: a, b: sum - a, op: MATTE_PLUSS };
+      }
+      const a = mtall(2, 10);
+      return { a: a, b: mtall(1, a - 1), op: MATTE_MINUS };
+    }
+  },
   '6-7': {
     navn: '6–7 år',
     beskrivelse: 'Pluss og minus opp til 20',

@@ -6,7 +6,7 @@
 
 // Bump VERSJON og CACHE i sw.js sammen ved hver endring - versjonsmerket i
 // toppen viser hvilken build som faktisk kjører i nettleseren.
-const VERSJON = 12;
+const VERSJON = 13;
 
 const RADII = { sma: 2, med: 3, sto: 4 };
 const NIVA_LAGER = 'hex-niva';
