@@ -150,22 +150,30 @@ svg#board{ width: 100%; height: auto; display: block; overflow: visible; }
   stroke-opacity: .32;
   transition: stroke-opacity .3s ease;
 }
+/* Klikkbar (mulig å trykke på): rask, uregelmessig "elektrisk" vibrerende
+   glød - dette er det eneste stedet den grønn/cyan aksentfargen brukes,
+   så den betyr entydig "her kan du trykke". */
 .hex.reachable .hex-outline{
   stroke: url(#hexEdgeGrad);
-  stroke-width: 2.2;
+  stroke-width: 2.3;
   stroke-opacity: 1;
-  filter: drop-shadow(0 0 6px rgba(79,240,228,.75));
-  animation: hexPulseGlow 2.2s ease-in-out infinite;
-}
-.hex.revealed .hex-outline{
-  stroke: url(#hexEdgeGrad);
-  stroke-width: 1.6;
-  stroke-opacity: .85;
-  filter: drop-shadow(0 0 3px rgba(79,240,228,.35));
+  animation: hexPulseGlow 1.3s linear infinite;
 }
 @keyframes hexPulseGlow{
-  0%,100%{ filter: drop-shadow(0 0 4px rgba(79,240,228,.5)); stroke-width: 1.9; }
-  50%{ filter: drop-shadow(0 0 10px rgba(82,224,142,.9)); stroke-width: 2.5; }
+  0%, 100%{ filter: drop-shadow(0 0 3px rgba(79,240,228,.55)) drop-shadow(0 0 8px rgba(82,224,142,.3)); stroke-width: 2.0; }
+  20%{ filter: drop-shadow(0 0 9px rgba(79,240,228,.95)) drop-shadow(0 0 17px rgba(82,224,142,.6)); stroke-width: 2.8; }
+  38%{ filter: drop-shadow(0 0 4px rgba(79,240,228,.6)) drop-shadow(0 0 9px rgba(82,224,142,.35)); stroke-width: 2.1; }
+  55%{ filter: drop-shadow(0 0 11px rgba(79,240,228,1)) drop-shadow(0 0 20px rgba(82,224,142,.7)); stroke-width: 3; }
+  72%{ filter: drop-shadow(0 0 4px rgba(79,240,228,.55)) drop-shadow(0 0 8px rgba(82,224,142,.3)); stroke-width: 2.1; }
+  86%{ filter: drop-shadow(0 0 8px rgba(79,240,228,.85)) drop-shadow(0 0 15px rgba(82,224,142,.55)); stroke-width: 2.6; }
+}
+
+/* Avdekket (allerede trykket på): rolig og ferdig - tynn, flat, matt
+   kant, ingen glød og ingen animasjon. Skal tydelig IKKE se klikkbar ut. */
+.hex.revealed .hex-outline{
+  stroke: rgba(234,247,244,.4);
+  stroke-width: 1.1;
+  stroke-opacity: .55;
 }
 
 /* Tåken er et eget lag som svever litt over selve ruten: den er alltid
